@@ -1,0 +1,23 @@
+### GET request to example server
+GET https://examples.http-client.intellij.net/get
+    ?generated-in=IntelliJ IDEA
+
+###
+### Test 1: Book a 2.5kg Order (Should cost 950 VT)
+POST http://localhost:1000/api/orders/book?weight=2.5&senderName=Paul
+
+### Test 2: Book a 6kg Order (Should cost 1800 VT)
+POST http://localhost:1000/api/orders/book?weight=6&senderName=Mary
+
+### Test 3: Register a Rider
+POST http://localhost:1000/api/auth/register
+Content-Type: application/json
+
+{
+  "fullName": "John Rider",
+  "phoneNumber": "5551234",
+  "password": "secret123",
+  "role": "RIDER",
+  "vehicleType": "Scooter",
+  "isAvailable": true
+}
