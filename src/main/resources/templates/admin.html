@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Admin Dashboard</title>
+    <style>
+        body { font-family: Arial; background-color: #f4f4f4; padding: 20px; margin: 0; }
+        .header { background: black; color: #FFD100; padding: 20px; text-align: center; }
+        .container { max-width: 900px; margin: 20px auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
+        th { background-color: #FFD100; color: black; }
+        .status-assigned { color: blue; font-weight: bold; }
+        .status-picked { color: orange; font-weight: bold; }
+        .status-delivered { color: green; font-weight: bold; }
+    </style>
+</head>
+<body>
+<div class="header">
+    <h1>YumiExpress Operations Center</h1>
+    <p>Port Vila Master Control</p>
+</div>
+
+<div class="container">
+    <h2>All Deliveries</h2>
+
+    <table>
+        <thead>
+        <tr>
+            <th>Order ID</th>
+            <th>Sender / Pickup</th>
+            <th>Weight</th>
+            <th>Price (VT)</th>
+            <th>Rider Assigned</th>
+            <th>Status</th>
+        </tr>
+        </thead>
+        <tbody>
+        <!-- Loop through every order in the database -->
+        <tr th:each="order : ${allOrders}">
+            <td th:text="${order.id}"></td>
+            <td th:text="${order.pickupAddress}"></td>
+            <td th:text="${order.weightInKg} + ' kg'"></td>
+            <td th:text="${order.price} + ' VT'"></td>
+
+            <!-- Show rider name if assigned, otherwise 'Unassigned' -->
+            <td th:text="${order.rider != null ? order.rider.fullName : 'Unassigned'}"></td>
+
+            <!-- Color-code the status -->
+            <td>
+                <span th:if="${order.status == 'ASSIGNED'}" class="status-assigned" th:text="${order.status}"></span>
+                <span th:if="${order.status == 'PICKED_UP'}" class="status-picked" th:text="${order.status}"></span>
+                <span th:if="${order.status == 'DELIVERED'}" class="status-delivered" th:text="${order.status}"></span>
+                <span th:if="${order.status == 'AWAITING_PAYMENT'}" th:text="${order.status}"></span>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+</div>
+</body>
+</html>

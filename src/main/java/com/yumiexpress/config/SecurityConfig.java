@@ -24,6 +24,10 @@ public class SecurityConfig {
                 .formLogin(form -> form.disable())
                 .authorizeHttpRequests(auth -> auth
                         // ALLOW these endpoints without needing a token!
+                        .requestMatchers("/", "/book", "/submit-booking").permitAll()
+                        .requestMatchers("/css/**", "/js/**", "/images/**").permitAll()
+                        .requestMatchers("/rider-portal/**", "/rider/**").permitAll()
+                        .requestMatchers("/admin-portal").permitAll() // <--- ADD THIS
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/api/orders/book").permitAll()
                         .requestMatchers("/api/orders/confirm-payment").permitAll()

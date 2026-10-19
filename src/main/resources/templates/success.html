@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Success</title>
+    <style>
+        body { font-family: Arial; background-color: #FFD100; text-align: center; padding: 50px; }
+        .box { background: white; padding: 30px; border-radius: 10px; max-width: 400px; margin: 0 auto; }
+        .btn { background: black; color: #FFD100; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block; margin-top: 20px; }
+    </style>
+</head>
+<body>
+<div class="box">
+    <h2>Booking Successful!</h2>
+    <p><strong>Order ID:</strong> <span th:text="${order.id}"></span></p>
+    <p><strong>Price:</strong> <span th:text="${order.price}"></span> VT</p>
+    <p><strong>Status:</strong> <span th:text="${order.status}"></span></p>
+    <p><strong>Rider Assigned:</strong> <span th:text="${order.rider != null ? order.rider.fullName : 'Pending'}"></span></p>
+    <a href="/" class="btn">Back to Home</a>
+</div>
+</body>
+</html>

@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Book Delivery</title>
+    <style>
+        body { font-family: Arial; background-color: #FFD100; padding: 50px; }
+        .box { background: white; padding: 30px; border-radius: 10px; max-width: 400px; margin: 0 auto; }
+        input { width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; }
+        .btn { background: black; color: #FFD100; padding: 15px; width: 100%; border: none; font-weight: bold; font-size: 18px; cursor: pointer; border-radius: 5px; }
+    </style>
+</head>
+<body>
+<div class="box">
+    <h2>Book a Delivery</h2>
+    <form action="/submit-booking" method="post">
+        <label>Sender Name:</label>
+        <input type="text" name="senderName" required>
+
+        <label>Parcel Weight (kg):</label>
+        <input type="number" step="0.1" name="weight" required>
+
+        <button type="submit" class="btn">Confirm Booking</button>
+    </form>
+</div>
+</body>
+</html>
