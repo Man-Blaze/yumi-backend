@@ -19,4 +19,7 @@ public class User {
 
     private String vehicleType;
     private boolean available;
+    // NEW FIELDS FOR RIDERS
+    private double currentLat;
+    private double currentLng;
 }

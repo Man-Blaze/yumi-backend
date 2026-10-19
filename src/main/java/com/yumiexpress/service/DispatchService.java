@@ -3,6 +3,7 @@ package com.yumiexpress.service;
 import com.yumiexpress.model.Order;
 import com.yumiexpress.model.User;
 import com.yumiexpress.repository.UserRepository;
+import com.yumiexpress.repository.OrderRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -14,29 +15,58 @@ public class DispatchService {
     @Autowired
     private UserRepository userRepository;
 
-    // This is the Knapsack + Assignment logic
-    public User assignBestRider(Order order) {
-        // 1. Get all riders who are online and available
+    @Autowired
+    private OrderRepository orderRepository;
+
+    @Autowired
+    private RoutingService routingService;
+
+    // The maximum weight a scooter can carry
+    private static final double MAX_SCOOTER_CAPACITY = 15.0;
+
+    public User assignBestRider(Order newOrder) {
         List<User> availableRiders = userRepository.findAll().stream()
                 .filter(user -> "RIDER".equals(user.getRole()) && user.isAvailable())
                 .toList();
 
-        if (availableRiders.isEmpty()) {
-            return null; // No riders available
-        }
+        if (availableRiders.isEmpty()) return null;
 
         User bestRider = null;
-        double lowestCurrentLoad = Double.MAX_VALUE;
+        double shortestDistance = Double.MAX_VALUE;
 
-        // 2. Find the rider with the lowest current load (Knapsack heuristic)
-        // For now, we just pick the first available rider.
-        // Later, we will calculate actual distance and weight capacity.
         for (User rider : availableRiders) {
-            // In a full build, we would check rider.getCurrentWeight() + order.getWeight() <= 15kg
-            bestRider = rider;
-            break;
+
+            // 1. THE KNAPSACK CHECK: How much is this rider already carrying?
+            double currentLoad = calculateCurrentLoad(rider);
+
+            // 2. If the rider's current load + the new order exceeds 15kg, skip them!
+            if ((currentLoad + newOrder.getWeightInKg()) > MAX_SCOOTER_CAPACITY) {
+                continue;
+            }
+
+            // 3. THE TSP CHECK: If they have space, are they the closest?
+            double distance = routingService.calculateDistance(
+                    rider.getCurrentLat(), rider.getCurrentLng(),
+                    newOrder.getPickupLat(), newOrder.getPickupLng()
+            );
+
+            if (distance < shortestDistance) {
+                shortestDistance = distance;
+                bestRider = rider;
+            }
         }
 
         return bestRider;
+    }
+
+    // Helper method to calculate a rider's current weight
+    private double calculateCurrentLoad(User rider) {
+        // Find all orders assigned to this rider that are not yet delivered
+        List<Order> activeOrders = orderRepository.findByRiderAndStatus(rider, "ASSIGNED");
+
+        // Add up their weights
+        return activeOrders.stream()
+                .mapToDouble(Order::getWeightInKg)
+                .sum();
     }
 }

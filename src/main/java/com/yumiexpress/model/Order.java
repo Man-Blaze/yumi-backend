@@ -26,4 +26,7 @@ public class Order {
     private double weightInKg;
     private double price;
     private String status;
+    // NEW FIELDS FOR ROUTING
+    private double pickupLat;
+    private double pickupLng;
 }
