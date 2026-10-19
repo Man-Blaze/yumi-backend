@@ -18,5 +18,5 @@ public class User {
     private String role; // "CUSTOMER" or "RIDER"
 
     private String vehicleType;
-    private boolean isAvailable;
+    private boolean available;
 }
