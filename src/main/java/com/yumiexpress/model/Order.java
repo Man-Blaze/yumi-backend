@@ -29,4 +29,6 @@ public class Order {
     // NEW FIELDS FOR ROUTING
     private double pickupLat;
     private double pickupLng;
+
+    private String m_vatu_reference;
 }

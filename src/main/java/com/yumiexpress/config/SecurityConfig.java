@@ -14,7 +14,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 public class SecurityConfig {
 
     @Autowired
-    private JwtAuthenticationFilter jwtAuthFilter; // Inject the filter
+    private JwtAuthenticationFilter jwtAuthFilter;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -22,15 +22,16 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .httpBasic(basic -> basic.disable())
                 .formLogin(form -> form.disable())
-
                 .authorizeHttpRequests(auth -> auth
+                        // ALLOW these endpoints without needing a token!
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/api/orders/book").permitAll()
+                        .requestMatchers("/api/orders/confirm-payment").permitAll()
+
+                        // EVERYTHING ELSE requires a token
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-
-                // Add our custom JWT filter before the standard username/password filter
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
