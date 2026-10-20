@@ -25,7 +25,7 @@ public class DispatchService {
     private static final double MAX_CAPACITY_KG = 15.0;
 
     public User assignBestRider(Order newOrder) {
-        // 1. Get all riders who are online
+        // 1. Get all riders who are online and available
         List<User> availableRiders = userRepository.findAll().stream()
                 .filter(user -> "RIDER".equals(user.getRole()) && user.isAvailable())
                 .toList();
@@ -38,7 +38,13 @@ public class DispatchService {
         for (User rider : availableRiders) {
 
             // 2. KNAPSACK CHECK: How much weight is this rider already carrying?
-            List<Order> activeOrders = orderRepository.findByRiderAndStatus(rider, "ASSIGNED");
+            // We must check both ASSIGNED (in their bag) and PICKED_UP (on the road)
+            List<Order> activeOrders = orderRepository.findAll().stream()
+                    .filter(o -> o.getRider() != null
+                            && o.getRider().getId().equals(rider.getId())
+                            && ("ASSIGNED".equals(o.getStatus()) || "PICKED_UP".equals(o.getStatus())))
+                    .toList();
+
             double currentLoad = activeOrders.stream().mapToDouble(Order::getWeightInKg).sum();
 
             // If adding this new order breaks the 15kg limit, skip this rider

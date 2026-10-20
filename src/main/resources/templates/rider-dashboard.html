@@ -11,6 +11,7 @@
         .btn { background: black; color: #FFD100; padding: 12px; text-decoration: none; font-weight: bold; border-radius: 5px; display: block; margin-top: 10px; text-align: center; border: none; cursor: pointer; width: 100%; font-size: 16px;}
         .btn-green { background: #00A651; color: white; }
         .btn-red { background: #E30613; color: white; }
+        .btn-yellow { background: #FFD100; color: black; }
         .status { background: #FFD100; padding: 5px 10px; border-radius: 20px; font-size: 12px; font-weight: bold; display: inline-block;}
     </style>
 </head>
@@ -24,7 +25,7 @@
     <h3>Your Assigned Tasks</h3>
 
     <div style="text-align: center; margin-bottom: 20px;">
-        <a th:href="@{/rider/load/{id}(id=${rider.id})}" class="btn" style="background: #FFD100; color: black; font-size: 18px;">📦 Scan Parcels to Load Bag</a>
+        <a th:href="@{/rider/load/{id}(id=${rider.id})}" class="btn btn-yellow" style="font-size: 18px;">📦 Scan Parcels to Load Bag</a>
     </div>
 
     <div th:if="${#lists.isEmpty(tasks)}">
@@ -40,21 +41,30 @@
         <p><strong>Recipient Phone:</strong> <span th:text="${task.recipientPhone}"></span></p>
         <p><strong>Status:</strong> <span class="status" th:text="${task.status}"></span></p>
 
-        <!-- If the order is assigned but not weighed -->
-        <a th:if="${task.status == 'ASSIGNED'}" th:href="@{/rider/weigh-parcel/{id}(id=${task.id})}" class="btn btn-red">Go to Customer & Weigh Parcel</a>
-        <!-- NEW: If the order is already weighed and paid, click to start driving -->
-        <a th:if="${task.status == 'ASSIGNED'}" th:href="@{/rider/update-status/{id}(id=${task.id}, status='PICKED_UP')}" class="btn" style="background: #000; margin-top: 10px;">Mark as Picked Up (Start Driving)</a>
+        <!-- B2C FLOW: No Tracking ID means it hasn't been weighed yet -->
+        <a th:if="${task.status == 'ASSIGNED' and task.trackingId == null}"
+           th:href="@{/rider/weigh-parcel/{id}(id=${task.id})}"
+           class="btn btn-red">Go to Customer & Weigh Parcel (B2C)</a>
 
-        <!-- Hand to Receiver for Sign-Off -->
-        <a th:if="${task.status == 'PICKED_UP'}" th:href="@{/receiver/sign-off/{id}(id=${task.id})}" class="btn btn-green">Hand to Receiver for Sign-Off</a>
-        <!-- Show QR Code once assigned/weighed -->
-        <div th:if="${task.status == 'ASSIGNED' or task.status == 'PICKED_UP'}" style="margin-top: 15px; border-top: 1px dashed #ccc; padding-top: 15px;">
+        <!-- B2B FLOW: Tracking ID exists, already weighed at warehouse -->
+        <a th:if="${task.status == 'ASSIGNED' and task.trackingId != null}"
+           th:href="@{/rider/load/{riderId}(riderId=${rider.id})}"
+           class="btn btn-yellow">Scan Parcel to Load Bag (B2B)</a>
+
+        <!-- PICKED_UP: Rider is on the road, needs to hand to receiver -->
+        <a th:if="${task.status == 'PICKED_UP'}"
+           th:href="@{/receiver/sign-off/{id}(id=${task.id})}"
+           class="btn btn-green">Hand to Receiver for Sign-Off</a>
+
+        <!-- Show QR Code if Tracking ID exists -->
+        <div th:if="${task.trackingId != null}" style="margin-top: 15px; border-top: 1px dashed #ccc; padding-top: 15px;">
             <p><strong>Tracking ID:</strong> <span th:text="${task.trackingId}"></span></p>
             <img th:src="@{/api/orders/{id}/qrcode(id=${task.id})}" alt="QR Code" style="width: 100px; height: 100px; border: 1px solid black;"/>
         </div>
-        <!-- Add this below the QR Code div -->
-        <div th:if="${task.status == 'ASSIGNED' or task.status == 'PICKED_UP'}" style="margin-top: 15px;">
-            <a th:href="@{/receipt/{id}(id=${task.id})}" class="btn" style="background: #00A651;">View Receipt for Customer</a>
+
+        <!-- View Receipt if Tracking ID exists -->
+        <div th:if="${task.trackingId != null}" style="margin-top: 15px;">
+            <a th:href="@{/receipt/{id}(id=${task.id})}" class="btn btn-green">View Receipt for Customer</a>
         </div>
     </div>
 </div>

@@ -6,7 +6,7 @@
     <style>
         body { font-family: Arial; background-color: #222; color: white; text-align: center; padding: 50px; margin: 0; }
         .box { background: #000; padding: 40px; border-radius: 10px; max-width: 500px; margin: 0 auto; border: 3px solid #FFD100; }
-        input { width: 90%; padding: 15px; font-size: 18px; margin: 10px 0; border-radius: 5px; border: none; }
+        input, select { width: 90%; padding: 15px; font-size: 18px; margin: 10px 0; border-radius: 5px; border: none; }
         .btn { background: #FFD100; color: black; padding: 15px; font-size: 20px; border: none; border-radius: 5px; font-weight: bold; cursor: pointer; width: 100%; margin-top: 20px;}
     </style>
 </head>
@@ -14,17 +14,24 @@
 <div class="box">
     <h1 style="color: #FFD100;">📷 Scan Seller Barcode</h1>
     <p>Order ID: <span th:text="${order.id}"></span></p>
-    <p style="color: #aaa; font-size: 14px;">Aim the scanner at the seller's barcode. The system will read the address.</p>
 
     <form th:action="@{/admin/scan-seller-barcode/{id}(id=${order.id})}" method="post">
-        <label>Seller Barcode:</label>
+        <label style="text-align: left; display: block;">Seller Barcode:</label>
         <input type="text" name="sellerBarcode" required autofocus placeholder="e.g., JOSS-9912">
 
-        <label>Extracted Receiver Address:</label>
-        <input type="text" name="receiverAddress" required placeholder="e.g., Mele Village, near the church">
+        <label style="text-align: left; display: block; margin-top: 10px;">Receiver Address:</label>
+        <input type="text" name="receiverAddress" required placeholder="e.g., Mele Village">
 
-        <label>Specific Address Details (Landmark/Family):</label>
-        <input type="text" name="specificAddressDetails" required placeholder="e.g., Mele Village, near the school">
+        <label style="text-align: left; display: block; margin-top: 10px;">Specific Details (Landmark/Family):</label>
+        <input type="text" name="specificAddressDetails" required placeholder="e.g., Blue house behind the church">
+
+        <label style="text-align: left; display: block; margin-top: 10px;">Delivery Zone:</label>
+        <select name="zone" required>
+            <option value="CENTRAL">Central Port Vila</option>
+            <option value="NORTHERN">Northern Ward (Tagabe)</option>
+            <option value="SOUTHERN">Southern Ward (Mele, Pango)</option>
+            <option value="RURAL">Rural Efate</option>
+        </select>
 
         <button type="submit" class="btn">Register & Generate YumiExpress QR</button>
     </form>

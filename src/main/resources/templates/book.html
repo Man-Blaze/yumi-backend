@@ -30,8 +30,16 @@
             <label>Where will you be? (Exact Location):</label>
             <input type="text" name="exactPickupLocation" required placeholder="e.g., Town, near the market">
 
-        <label>Receiver's Specific Address Details:</label>
-        <input type="text" name="specificAddressDetails" required placeholder="e.g., Blue house behind the church, ask for Aunty Leisav">
+             <label>Receiver's Specific Address Details:</label>
+             <input type="text" name="specificAddressDetails" required placeholder="e.g., Blue house behind the church, ask for Aunty Leisav">
+
+            <label>Estimated Parcel Weight:</label>
+            <select name="weight" required style="width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ccc; border-radius: 5px;">
+                <option value="1.0">Small Envelope (Up to 1 kg) - 500 VT</option>
+                <option value="2.5">Standard Box (Up to 3 kg) - 950 VT</option>
+                <option value="4.0">Medium Box (Up to 5 kg) - 1200 VT</option>
+                <option value="8.0">Heavy Box (Up to 10 kg) - 1800 VT</option>
+            </select>
 
             <label>When should we meet you?</label>
             <input type="time" name="pickupTime" required>

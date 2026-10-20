@@ -10,6 +10,8 @@ public class PricingService {
         else if (weightInKg <= 3.0) return 950.0;
         else if (weightInKg <= 5.0) return 1200.0;
         else if (weightInKg <= 10.0) return 1800.0;
-        else return -1.0;
+        else if (weightInKg <= 20.0) return 2500.0; // <--- Add this for heavy truck items
+        else return 3500.0; // For very heavy items
+
     }
 }

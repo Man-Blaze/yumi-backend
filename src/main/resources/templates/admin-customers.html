@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - Customers</title>
+    <style>
+        body { font-family: Arial; background-color: #f4f4f4; padding: 20px; margin: 0; }
+        .header { background: black; color: #FFD100; padding: 20px; text-align: center; border-radius: 10px 10px 0 0; max-width: 1000px; margin: 0 auto; }
+        .container { max-width: 1000px; margin: 0 auto 40px auto; background: white; padding: 20px; border-radius: 0 0 10px 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
+        th { background-color: #FFD100; color: black; }
+    </style>
+</head>
+<body>
+<div class="header">
+    <h1>YumiExpress Customer Database</h1>
+    <p>All Registered Customers</p>
+
+    <div style="margin-top: 15px; display: flex; justify-content: center; gap: 10px; flex-wrap: wrap;">
+        <a href="/admin-portal" style="color: #FFD100; text-decoration: none; padding: 10px 15px; font-weight: bold; border: 1px solid #FFD100; border-radius: 5px;">📦 All Orders</a>
+        <a href="/admin/riders" style="color: #FFD100; text-decoration: none; padding: 10px 15px; font-weight: bold; border: 1px solid #FFD100; border-radius: 5px;">🛵 Riders</a>
+        <a href="/admin/customers" style="background: #FFD100; color: black; text-decoration: none; padding: 10px 15px; font-weight: bold; border-radius: 5px;">👤 Customers</a>
+    </div>
+</div>
+
+<div class="container">
+    <h2>Registered Customers</h2>
+    <table>
+        <thead>
+        <tr>
+            <th>Customer ID</th>
+            <th>Name</th>
+            <th>Phone</th>
+            <th>Area / Village</th>
+            <th>Action</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="customer : ${customers}">
+            <td th:text="${customer.id}"></td>
+            <td th:text="${customer.fullName}"></td>
+            <td th:text="${customer.phoneNumber}"></td>
+            <td th:text="${customer.area}"></td>
+            <td>
+                <a th:href="@{/customer-dashboard/{id}(id=${customer.id})}" class="btn">View Dashboard</a>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+</div>
+</body>
+</html>

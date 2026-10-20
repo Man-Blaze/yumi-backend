@@ -23,27 +23,40 @@ public class SecurityConfig {
                 .httpBasic(basic -> basic.disable())
                 .formLogin(form -> form.disable())
                 .authorizeHttpRequests(auth -> auth
-                        // 1. Allow ALL Web Pages and Form Submissions
-                        .requestMatchers("/", "/register", "/login", "/process-register", "/process-login", "/book", "/submit-booking", "/success", "/receipt/**").permitAll()
-                        .requestMatchers("/customer-register", "/send-otp", "/verify-otp", "/customer-dashboard/**", "/rate-order/**").permitAll()
+                        // 1. THE MOST SPECIFIC RULES FIRST
+                        .requestMatchers("/admin/riders").permitAll()
+                        .requestMatchers("/admin/customers").permitAll()
+                        .requestMatchers("/admin/scan-seller-barcode/**").permitAll()
+                        .requestMatchers("/admin/assign-rider/**").permitAll()
+                        .requestMatchers("/admin-portal").permitAll()
+                        .requestMatchers("/warehouse/**").permitAll()
 
-                        // 2. Allow Rider & Admin Portals AND form submissions
-                        .requestMatchers("/rider-portal/**", "/rider/**").permitAll()
-                        .requestMatchers("/admin-portal", "/admin/assign-rider/**").permitAll()
+                                .requestMatchers("/rider-portal/**", "/rider/**").permitAll()
+                                .requestMatchers("/rider/weigh-parcel/**").permitAll()
 
-                        // 3. Allow API Endpoints
+                        .requestMatchers("/customer-dashboard/**", "/rate-order/**").permitAll()
+                        .requestMatchers("/customer-register", "/send-otp", "/verify-otp").permitAll()
+
+                        .requestMatchers("/seller-login", "/seller-dashboard").permitAll()
+                        .requestMatchers("/receiver/**").permitAll()
+                        .requestMatchers("/receipt/**").permitAll()
+
+                        // 2. PUBLIC PAGES
+                        .requestMatchers("/", "/register", "/login", "/process-register", "/process-login").permitAll()
+                        .requestMatchers("/book", "/submit-booking", "/success").permitAll()
+
+                        // 3. APIS
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/api/orders/book").permitAll()
                         .requestMatchers("/api/orders/confirm-payment").permitAll()
                         .requestMatchers("/api/orders/*/qrcode").permitAll()
-                        .requestMatchers("/receiver/**").permitAll()
-                        .requestMatchers("/seller-login", "/seller-dashboard").permitAll()
-                        .requestMatchers("/warehouse/**").permitAll()
-                        // Everything else requires a token
+
+                        // 4. CATCH-ALL (Must be last)
                         .anyRequest().authenticated()
+                         //.anyRequest().permitAll()
                 )
-                .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
+                .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
+               // .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }

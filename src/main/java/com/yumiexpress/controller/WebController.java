@@ -28,7 +28,9 @@ public class WebController {
     @Autowired
     private UserRepository userRepository;
 
-    // --- PUBLIC PAGES ---
+    // ==========================================
+    // 1. PUBLIC PAGES
+    // ==========================================
     @GetMapping("/")
     public String home() { return "index"; }
 
@@ -59,8 +61,8 @@ public class WebController {
             user.setAvailable(true);
             user.setVehicleType(vehicleType);
             user.setPayRate("OWN_SCOOTER".equals(vehicleType) ? 350.0 : 150.0);
-            user.setCurrentLat(-17.73);
-            user.setCurrentLng(168.31);
+            user.setCurrentLat(-17.70 - (new java.util.Random().nextDouble() * 0.1));
+            user.setCurrentLng(168.25 + (new java.util.Random().nextDouble() * 0.1));
         }
 
         User savedUser = userRepository.save(user);
@@ -72,22 +74,20 @@ public class WebController {
         }
     }
 
-    // 1. Show the Customer Dashboard
+    // ==========================================
+    // 2. B2C: CUSTOMER FLOW (Book & Track)
+    // ==========================================
     @GetMapping("/customer-dashboard/{customerId}")
     public String showCustomerDashboard(@PathVariable Long customerId, Model model) {
         User customer = userRepository.findById(customerId).orElseThrow();
-
-        // FETCH ORDERS SPECIFICALLY LINKED TO THIS CUSTOMER
         List<Order> customerOrders = orderRepository.findAll().stream()
                 .filter(o -> o.getCustomer() != null && o.getCustomer().getId().equals(customerId))
                 .toList();
-
         model.addAttribute("customer", customer);
         model.addAttribute("orders", customerOrders);
         return "customer-dashboard";
     }
 
-    // --- BOOKING FORM ---
     @GetMapping("/book")
     public String showBookingForm(@RequestParam(required = false) Long userId, Model model) {
         if (userId != null) {
@@ -102,7 +102,7 @@ public class WebController {
             @RequestParam Long userId,
             @RequestParam String recipientPhone,
             @RequestParam String exactPickupLocation,
-            @RequestParam String specificAddressDetails, // <--- Catch the new field
+            @RequestParam String specificAddressDetails,
             @RequestParam String pickupTime,
             @RequestParam double lat,
             @RequestParam double lng,
@@ -114,7 +114,7 @@ public class WebController {
         newOrder.setCustomer(customer);
         newOrder.setPickupAddress(customer.getFullName());
         newOrder.setExactPickupLocation(exactPickupLocation);
-        newOrder.setSpecificAddressDetails(specificAddressDetails); // <--- Save it
+        newOrder.setSpecificAddressDetails(specificAddressDetails);
         newOrder.setPickupTime(pickupTime);
         newOrder.setRecipientPhone(recipientPhone);
         newOrder.setStatus("AWAITING_PICKUP");
@@ -126,7 +126,192 @@ public class WebController {
         return "success";
     }
 
-    // --- RIDER PAGES ---
+    @PostMapping("/rate-order/{id}")
+    public String rateOrder(@PathVariable Long id, @RequestParam int rating) {
+        Order order = orderRepository.findById(id).orElseThrow();
+        order.setCustomerRating(rating);
+        orderRepository.save(order);
+        return "redirect:/customer-dashboard/" + order.getCustomer().getId();
+    }
+
+    // ==========================================
+    // 3. B2B: WAREHOUSE & SELLER FLOW
+    // ==========================================
+    @PostMapping("/warehouse/bulk-intake")
+    public String receiveBulkParcels(@RequestParam String sellerName, @RequestParam int count) {
+        for (int i = 0; i < count; i++) {
+            Order order = new Order();
+            order.setPickupAddress(sellerName);
+            order.setExactPickupLocation("YumiExpress Warehouse, Tagabe");
+            order.setStatus("AWAITING_WEIGH_IN");
+            order.setPickupLat(-17.73);
+            order.setPickupLng(168.31);
+            orderRepository.save(order);
+        }
+        System.out.println("📦 Bulk Intake: " + count + " parcels received from " + sellerName);
+        return "redirect:/admin-portal";
+    }
+
+    // The Wireless Scanner
+    @PostMapping("/admin/barcode-scan")
+    public String processBarcodeScan(@RequestParam String sellerBarcode) {
+        Order order = orderRepository.findAll().stream()
+                .filter(o -> "AWAITING_WEIGH_IN".equals(o.getStatus()) && o.getReceiverAddress() == null)
+                .findFirst()
+                .orElse(null);
+
+        if (order == null) {
+            System.out.println("❌ No empty parcels waiting for scan.");
+            return "redirect:/admin-portal";
+        }
+
+        String[] parts = sellerBarcode.split("\\|");
+        if (parts.length >= 5) {
+            order.setSellerTrackingNumber(parts[0]);
+            order.setRecipientPhone(parts[1]);
+            order.setReceiverAddress(parts[2]);
+            order.setSpecificAddressDetails(parts[3]);
+            order.setDeliveryZone(parts[4]);
+        } else {
+            order.setSellerTrackingNumber(sellerBarcode);
+            order.setRecipientPhone("2341");
+            order.setReceiverAddress("Manples Area");
+            order.setSpecificAddressDetails("Behind Bon Marche Manples");
+            order.setDeliveryZone("CENTRAL");
+        }
+
+        order.setStatus("SCANNED");
+        orderRepository.save(order);
+        System.out.println("✅ Parcel scanned: " + sellerBarcode);
+        return "redirect:/warehouse/scan";
+    }
+
+    // The Sorting Station
+    @GetMapping("/warehouse/scan")
+    public String showScanningStation(Model model) {
+        Order nextOrder = orderRepository.findAll().stream()
+                .filter(o -> "SCANNED".equals(o.getStatus()))
+                .findFirst()
+                .orElse(null);
+        model.addAttribute("order", nextOrder);
+        return "warehouse-scan";
+    }
+
+    @PostMapping("/warehouse/scan")
+    public String processScan(@RequestParam Long orderId, @RequestParam double weight) {
+        Order order = orderRepository.findById(orderId).orElseThrow();
+        order.setWeightInKg(weight);
+        order.setPrice(pricingService.calculatePrice(weight));
+        order.setTrackingId("YE-" + (10000 + new java.util.Random().nextInt(90000)));
+        order.setStatus("SORTED");
+        orderRepository.save(order);
+        System.out.println("⚖️ Parcel weighed and sorted: " + order.getTrackingId());
+        return "redirect:/warehouse/scan";
+    }
+
+    @GetMapping("/seller-login")
+    public String showSellerLogin() { return "seller-login"; }
+
+    @GetMapping("/seller-dashboard")
+    public String showSellerDashboard(@RequestParam String businessName, @RequestParam String phoneNumber, @RequestParam String email, Model model) {
+        System.out.println("🔍 VERIFYING SELLER: " + businessName);
+        model.addAttribute("businessName", businessName);
+        return "seller-dashboard";
+    }
+    // 1. Show the scan page for a specific order
+    @GetMapping("/admin/scan-seller-barcode/{id}")
+    public String showScanSellerPage(@PathVariable Long id, Model model) {
+        Order order = orderRepository.findById(id).orElseThrow();
+        model.addAttribute("order", order);
+        return "scan-seller";
+    }
+    // 2. Process the seller barcode and address
+    @PostMapping("/admin/scan-seller-barcode/{id}")
+    public String processSellerBarcode(@PathVariable Long id,
+                                       @RequestParam String sellerBarcode,
+                                       @RequestParam String receiverAddress,
+                                       @RequestParam String specificAddressDetails,
+                                       @RequestParam String zone) {
+        Order order = orderRepository.findById(id).orElseThrow();
+
+        order.setSellerTrackingNumber(sellerBarcode);
+        order.setReceiverAddress(receiverAddress);
+        order.setSpecificAddressDetails(specificAddressDetails);
+        order.setDeliveryZone(zone);
+        order.setTrackingId("YE-" + (10000 + new java.util.Random().nextInt(90000)));
+        order.setStatus("SCANNED"); // Ready for the Sorting Station
+
+        orderRepository.save(order);
+        return "redirect:/warehouse/scan"; // Send staff straight to the scale
+    }
+
+    // ==========================================
+    // 4. ADMIN DASHBOARD & DISPATCH
+    // ==========================================
+    @GetMapping("/admin-portal")
+    public String showAdminDashboard(Model model) {
+        List<Order> allOrders = orderRepository.findAll();
+        allOrders.sort((a, b) -> b.getId().compareTo(a.getId()));
+        model.addAttribute("allOrders", allOrders);
+
+        List<User> riders = userRepository.findAll().stream()
+                .filter(u -> "RIDER".equals(u.getRole()))
+                .toList();
+        model.addAttribute("riders", riders);
+
+        java.util.Map<Long, Double> riderBagWeights = new java.util.HashMap<>();
+        java.util.Map<Long, Integer> riderBagCounts = new java.util.HashMap<>();
+
+        for (User rider : riders) {
+            // Find all parcels assigned to this rider that aren't delivered yet
+            List<Order> activeParcels = allOrders.stream()
+                    .filter(o -> o.getRider() != null && o.getRider().getId().equals(rider.getId())
+                            && ("ASSIGNED".equals(o.getStatus()) || "PICKED_UP".equals(o.getStatus()))) // <--- ONLY COUNT ACTIVE PARCELS
+                    .toList();
+            double totalWeight = activeParcels.stream().mapToDouble(Order::getWeightInKg).sum();
+            riderBagWeights.put(rider.getId(), totalWeight);
+            riderBagCounts.put(rider.getId(), activeParcels.size());
+        }
+
+        model.addAttribute("riderBagWeights", riderBagWeights);
+        model.addAttribute("riderBagCounts", riderBagCounts);
+        return "admin";
+    }
+
+    @GetMapping("/admin/assign-rider/{id}")
+    public String assignRider(@PathVariable Long id) {
+        Order order = orderRepository.findById(id).orElseThrow();
+        User rider = dispatchService.assignBestRider(order);
+
+        if (rider != null) {
+            order.setRider(rider);
+            order.setStatus("ASSIGNED");
+            orderRepository.save(order);
+        }
+        return "redirect:/admin-portal";
+    }
+
+    @GetMapping("/admin/riders")
+    public String showAdminRiders(Model model) {
+        List<User> riders = userRepository.findAll().stream()
+                .filter(u -> "RIDER".equals(u.getRole()))
+                .toList();
+        model.addAttribute("riders", riders);
+        return "admin-riders";
+    }
+
+    @GetMapping("/admin/customers")
+    public String showAdminCustomers(Model model) {
+        List<User> customers = userRepository.findAll().stream()
+                .filter(u -> "CUSTOMER".equals(u.getRole()))
+                .toList();
+        model.addAttribute("customers", customers);
+        return "admin-customers";
+    }
+
+    // ==========================================
+    // 5. RIDER FLOW
+    // ==========================================
     @GetMapping("/rider-portal/{riderId}")
     public String showRiderDashboard(@PathVariable Long riderId, Model model) {
         User rider = userRepository.findById(riderId).orElseThrow(() -> new RuntimeException("Rider not found"));
@@ -144,36 +329,32 @@ public class WebController {
         return "redirect:/rider-portal/" + order.getRider().getId();
     }
 
-    @GetMapping("/admin-portal")
-    public String showAdminDashboard(Model model) {
-        // Fetch all orders
-        List<Order> allOrders = orderRepository.findAll();
-        allOrders.sort((a, b) -> b.getId().compareTo(a.getId()));
-        model.addAttribute("allOrders", allOrders);
-
-        // Fetch all Riders
-        List<User> riders = userRepository.findAll().stream()
-                .filter(u -> "RIDER".equals(u.getRole()))
-                .toList();
-        model.addAttribute("riders", riders);
-
-        return "admin";
+    @GetMapping("/rider/load/{riderId}")
+    public String showLoadPage(@PathVariable Long riderId, Model model) {
+        User rider = userRepository.findById(riderId).orElseThrow();
+        model.addAttribute("rider", rider);
+        return "rider-load";
     }
 
-    @GetMapping("/admin/assign-rider/{id}")
-    public String assignRider(@PathVariable Long id) {
-        Order order = orderRepository.findById(id).orElseThrow();
-        User rider = dispatchService.assignBestRider(order);
+    @PostMapping("/rider/load-parcel/{riderId}")
+    public String loadParcel(@PathVariable Long riderId, @RequestParam String trackingId, Model model) {
+        User rider = userRepository.findById(riderId).orElseThrow();
+        Order order = orderRepository.findAll().stream()
+                .filter(o -> trackingId.equals(o.getTrackingId()))
+                .findFirst()
+                .orElse(null);
 
-        if (rider != null) {
-            order.setRider(rider);
-            order.setStatus("ASSIGNED");
+        if (order != null && order.getRider() != null && order.getRider().getId().equals(riderId)) {
+            order.setStatus("PICKED_UP");
             orderRepository.save(order);
+            model.addAttribute("message", "✅ Parcel " + trackingId + " loaded into bag!");
+        } else {
+            model.addAttribute("message", "❌ Error: Parcel not found or not assigned to you.");
         }
-        return "redirect:/admin-portal";
+        model.addAttribute("rider", rider);
+        return "rider-load";
     }
 
-    // --- WEIGH & PAY FLOW ---
     @GetMapping("/rider/weigh-parcel/{id}")
     public String showWeighParcel(@PathVariable Long id, Model model) {
         Order order = orderRepository.findById(id).orElseThrow();
@@ -186,16 +367,34 @@ public class WebController {
         Order order = orderRepository.findById(id).orElseThrow();
         order.setWeightInKg(weight);
         order.setPrice(pricingService.calculatePrice(weight));
-
         if (order.getTrackingId() == null) {
             order.setTrackingId("YE-" + (10000 + new java.util.Random().nextInt(90000)));
         }
-
         paymentService.createPaymentRequest(order);
         paymentService.confirmPayment(order.getM_vatu_reference());
-
         order.setStatus("ASSIGNED");
         orderRepository.save(order);
+        return "redirect:/receipt/" + order.getId();
+    }
+
+    // ==========================================
+    // 6. RECEIVER SIGN-OFF & RECEIPT
+    // ==========================================
+    @GetMapping("/receiver/sign-off/{id}")
+    public String showSignOffPage(@PathVariable Long id, Model model) {
+        Order order = orderRepository.findById(id).orElseThrow();
+        model.addAttribute("order", order);
+        return "sign-off";
+    }
+
+    @PostMapping("/receiver/sign-off/{id}")
+    public String processSignOff(@PathVariable Long id) {
+        Order order = orderRepository.findById(id).orElseThrow();
+        order.setStatus("DELIVERED");
+        orderRepository.save(order);
+        paymentService.processPayment(order);
+        System.out.println("\n🚨 FINAL DELIVERY ALERT 🚨");
+        System.out.println("Order #" + order.getId() + " (Tracking: " + order.getTrackingId() + ") has been DELIVERED and SIGNED for.");
         return "redirect:/receipt/" + order.getId();
     }
 
@@ -206,7 +405,9 @@ public class WebController {
         return "receipt";
     }
 
-    // --- CUSTOMER REGISTRATION VIA OTP ---
+    // ==========================================
+    // 7. CUSTOMER OTP REGISTRATION
+    // ==========================================
     @GetMapping("/customer-register")
     public String showCustomerRegister() { return "customer-register"; }
 
@@ -220,9 +421,7 @@ public class WebController {
     @PostMapping("/verify-otp")
     public String verifyOtp(@RequestParam String phoneNumber, @RequestParam String otpCode) {
         if (!"1234".equals(otpCode)) throw new RuntimeException("Invalid OTP Code");
-
         User user = userRepository.findByPhoneNumber(phoneNumber).orElse(null);
-
         if (user == null) {
             user = new User();
             user.setPhoneNumber(phoneNumber);
@@ -233,183 +432,4 @@ public class WebController {
         }
         return "redirect:/customer-dashboard/" + user.getId();
     }
-
-    // --- RATING SYSTEM ---
-    @PostMapping("/rate-order/{id}")
-    public String rateOrder(@PathVariable Long id, @RequestParam int rating) {
-        Order order = orderRepository.findById(id).orElseThrow();
-        order.setCustomerRating(rating);
-        orderRepository.save(order);
-        return "redirect:/customer-dashboard/" + order.getCustomer().getId();
-    }
-    // 1. Show the sign-off page to the receiver
-    @GetMapping("/receiver/sign-off/{id}")
-    public String showSignOffPage(@PathVariable Long id, Model model) {
-        Order order = orderRepository.findById(id).orElseThrow();
-        model.addAttribute("order", order);
-        return "sign-off";
-    }
-
-    // 2. Process the receiver's signature and finalize the delivery
-    @PostMapping("/receiver/sign-off/{id}")
-    public String processSignOff(@PathVariable Long id) {
-        Order order = orderRepository.findById(id).orElseThrow();
-
-        // 1. Update order status
-        order.setStatus("DELIVERED");
-        orderRepository.save(order);
-
-        // 2. Finalize Payment (Confirm M-Vatu transfer)
-        paymentService.processPayment(order);
-
-        // 3. Send SMS alerts to everyone
-        System.out.println("\n🚨 FINAL DELIVERY ALERT 🚨");
-        System.out.println("Order #" + order.getId() + " (Tracking: " + order.getTrackingId() + ") has been DELIVERED and SIGNED for.");
-        System.out.println("Notification sent to Customer, Admin, and Rider.");
-
-        // 4. Redirect to a final success screen
-        return "redirect:/receipt/" + order.getId();
-    }
-    @GetMapping("/seller-login")
-    public String showSellerLogin() {
-        return "seller-login";
-    }
-
-    @GetMapping("/seller-dashboard")
-    public String showSellerDashboard(@RequestParam String businessName, @RequestParam String phoneNumber, @RequestParam String email, Model model) {
-
-        // In production, this is where you would call the Vodafone/Digicel API
-        // to verify the phone number is active and belongs to the business.
-        System.out.println("🔍 VERIFYING SELLER: " + businessName + " | Phone: " + phoneNumber + " | Email: " + email);
-        System.out.println("✅ VERIFICATION PASSED (Simulated via Vodafone/Digicel)");
-
-        model.addAttribute("businessName", businessName);
-        return "seller-dashboard";
-    }
-    // 1. This simulates receiving the 500 parcels at the warehouse
-    @PostMapping("/warehouse/bulk-intake")
-    public String receiveBulkParcels(@RequestParam String sellerName, @RequestParam int count) {
-        for (int i = 0; i < count; i++) {
-            Order order = new Order();
-            order.setPickupAddress(sellerName);
-            order.setExactPickupLocation("YumiExpress Warehouse, Tagabe");
-            order.setStatus("AWAITING_WEIGH_IN");
-            // Set a dummy pickup location so the TSP algorithm works later
-            order.setPickupLat(-17.73);
-            order.setPickupLng(168.31);
-            orderRepository.save(order);
-        }
-        System.out.println("📦 Bulk Intake: " + count + " parcels received from " + sellerName);
-        return "redirect:/admin-portal";
-    }
-
-    // 2. Show the fast-paced Scanning Station
-    @GetMapping("/warehouse/scan")
-    public String showScanningStation(Model model) {
-        // Find the first parcel that hasn't been weighed yet
-        Order nextOrder = orderRepository.findAll().stream()
-                .filter(o -> "AWAITING_WEIGH_IN".equals(o.getStatus()))
-                .findFirst()
-                .orElse(null);
-
-        model.addAttribute("order", nextOrder);
-        return "warehouse-scan";
-    }
-
-    // 3. Process the weight, calculate price, generate QR, and loop to the next
-    @PostMapping("/warehouse/scan")
-    public String processScan(@RequestParam Long orderId, @RequestParam double weight) {
-        Order order = orderRepository.findById(orderId).orElseThrow();
-
-        // Calculate price (950 VT for 3kg, 1200 VT for 5kg, etc.)
-        order.setWeightInKg(weight);
-        order.setPrice(pricingService.calculatePrice(weight));
-        order.setTrackingId("YE-" + (10000 + new java.util.Random().nextInt(90000)));
-        order.setStatus("SORTED"); // Ready for rider assignment
-
-        orderRepository.save(order);
-
-        // Refresh the page to load the NEXT parcel automatically
-        return "redirect:/warehouse/scan";
-    }
-    // Simulate scanning a parcel at the warehouse
-    @GetMapping("/warehouse/scan/{orderId}")
-    public String scanParcelAtWarehouse(@PathVariable Long orderId, Model model) {
-        Order order = orderRepository.findById(orderId).orElseThrow();
-        model.addAttribute("order", order);
-        return "warehouse-weigh-in";
-    }
-
-    // Process the weigh-in at the warehouse
-    @PostMapping("/warehouse/scan/{orderId}")
-    public String processWarehouseWeighIn(@PathVariable Long orderId, @RequestParam double weight) {
-        Order order = orderRepository.findById(orderId).orElseThrow();
-
-        order.setWeightInKg(weight);
-        order.setPrice(pricingService.calculatePrice(weight));
-        order.setTrackingId("YE-" + (10000 + new java.util.Random().nextInt(90000)));
-        order.setStatus("AWAITING_RIDER_ASSIGNMENT");
-
-        orderRepository.save(order);
-
-        return "redirect:/admin-portal";
-    }
-    // 1. Show the scan page
-    @GetMapping("/admin/scan-seller-barcode/{id}")
-    public String showScanSellerPage(@PathVariable Long id, Model model) {
-        Order order = orderRepository.findById(id).orElseThrow();
-        model.addAttribute("order", order);
-        return "scan-seller";
-    }
-
-    // 2. Process the seller barcode and address
-    @PostMapping("/admin/scan-seller-barcode/{id}")
-    public String processSellerBarcode(@PathVariable Long id,
-                                       @RequestParam String sellerBarcode,
-                                       @RequestParam String receiverAddress,
-                                       @RequestParam String specificAddressDetails, // <--- Catch it
-                                       @RequestParam String zone) {
-        Order order = orderRepository.findById(id).orElseThrow();
-
-        order.setSellerTrackingNumber(sellerBarcode);
-        order.setReceiverAddress(receiverAddress);
-        order.setSpecificAddressDetails(specificAddressDetails); // <--- Save it
-        order.setDeliveryZone(zone);
-        order.setTrackingId("YE-" + (10000 + new java.util.Random().nextInt(90000)));
-        order.setStatus("AWAITING_RIDER");
-
-        orderRepository.save(order);
-        return "redirect:/admin-portal";
-    }
-    // Show the loading page
-    @GetMapping("/rider/load/{riderId}")
-    public String showLoadPage(@PathVariable Long riderId, Model model) {
-        User rider = userRepository.findById(riderId).orElseThrow();
-        model.addAttribute("rider", rider);
-        return "rider-load";
-    }
-
-    // Process the scan
-    @PostMapping("/rider/load-parcel/{riderId}")
-    public String loadParcel(@PathVariable Long riderId, @RequestParam String trackingId, Model model) {
-        User rider = userRepository.findById(riderId).orElseThrow();
-
-        // Find the order by tracking ID
-        Order order = orderRepository.findAll().stream()
-                .filter(o -> trackingId.equals(o.getTrackingId()))
-                .findFirst()
-                .orElse(null);
-
-        if (order != null && order.getRider() != null && order.getRider().getId().equals(riderId)) {
-            order.setStatus("PICKED_UP"); // Rider has it in the bag
-            orderRepository.save(order);
-            model.addAttribute("message", "✅ Parcel " + trackingId + " loaded into bag!");
-        } else {
-            model.addAttribute("message", "❌ Error: Parcel not found or not assigned to you.");
-        }
-
-        model.addAttribute("rider", rider);
-        return "rider-load";
-    }
-
 }

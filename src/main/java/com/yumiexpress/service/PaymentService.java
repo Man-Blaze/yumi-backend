@@ -30,19 +30,24 @@ public class PaymentService {
 
     // 2. Simulate the customer approving the payment on their phone
     public PaymentRecord confirmPayment(String referenceNumber) {
+        // Safety check: Make sure the reference number is not empty
+        if (referenceNumber == null || referenceNumber.trim().isEmpty()) {
+            throw new RuntimeException("Invalid M-Vatu Reference: Reference is empty.");
+        }
+
         // Find the payment record by the reference number
         PaymentRecord payment = paymentRepository.findAll().stream()
-                .filter(p -> p.getM_vatu_reference().equals(referenceNumber))
+                .filter(p -> p.getM_vatu_reference() != null && p.getM_vatu_reference().equals(referenceNumber))
                 .findFirst()
-                .orElseThrow(() -> new RuntimeException("Payment reference not found"));
+                .orElseThrow(() -> new RuntimeException("Payment reference not found: " + referenceNumber));
 
-        if (payment.getStatus().equals("PAID")) {
-            throw new RuntimeException("Payment already completed");
+        if ("PAID".equals(payment.getStatus())) {
+            throw new RuntimeException("Payment already completed for reference: " + referenceNumber);
         }
 
         // Mark as paid
         payment.setStatus("PAID");
-        payment.setPaymentTime(LocalDateTime.now());
+        payment.setPaymentTime(java.time.LocalDateTime.now());
         return paymentRepository.save(payment);
     }
 

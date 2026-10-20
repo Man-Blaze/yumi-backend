@@ -5,15 +5,25 @@
     <title>Admin Operations Center - YumiExpress</title>
     <style>
         body { font-family: Arial; background-color: #f4f4f4; padding: 20px; margin: 0; }
-        .header { background: black; color: #FFD100; padding: 20px; text-align: center; border-radius: 10px 10px 0 0; max-width: 1000px; margin: 0 auto; }
-        .container { max-width: 1000px; margin: 0 auto 40px auto; background: white; padding: 20px; border-radius: 0 0 10px 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+        .header { background: black; color: #FFD100; padding: 20px; text-align: center; border-radius: 10px 10px 0 0; max-width: 1100px; margin: 0 auto; }
+        .nav-menu { margin-top: 15px; display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; }
+        .nav-btn { color: #FFD100; text-decoration: none; padding: 10px 15px; font-weight: bold; border: 1px solid #FFD100; border-radius: 5px; font-size: 14px;}
+        .nav-btn:hover { background: #FFD100; color: black; }
+        .nav-btn-active { background: #FFD100; color: black; }
+        .container { max-width: 1100px; margin: 0 auto 40px auto; background: white; padding: 20px; border-radius: 0 0 10px 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
         table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; font-size: 14px;}
         th { background-color: #FFD100; color: black; }
         .status-assigned { color: blue; font-weight: bold; }
         .status-picked { color: orange; font-weight: bold; }
         .status-delivered { color: green; font-weight: bold; }
-        .btn { background: #000; color: #FFD100; padding: 8px 12px; text-decoration: none; border-radius: 5px; font-weight: bold; font-size: 14px;}
+        .status-scanned { color: #E30613; font-weight: bold; }
+        .status-sorted { color: #00A651; font-weight: bold; }
+        .status-pickup { color: #E30613; font-weight: bold; }
+        .btn { background: #000; color: #FFD100; padding: 8px 12px; text-decoration: none; border-radius: 5px; font-weight: bold; font-size: 13px; display: inline-block;}
+        .btn-green { background: #00A651; color: white; }
+        .btn-red { background: #E30613; color: white; }
+        .btn-yellow { background: #FFD100; color: black; }
         .warehouse-box { background: #f9f9f9; padding: 20px; border-radius: 8px; margin-bottom: 30px; border: 2px dashed #000; }
     </style>
 </head>
@@ -21,6 +31,15 @@
 <div class="header">
     <h1>YumiExpress Operations Center</h1>
     <p>Port Vila Master Control</p>
+
+    <!-- NAVIGATION MENU -->
+    <div class="nav-menu">
+        <a href="/admin-portal" class="nav-btn nav-btn-active">📦 All Orders</a>
+        <a href="/admin/riders" class="nav-btn">🛵 Riders</a>
+        <a href="/admin/customers" class="nav-btn">👤 Customers</a>
+        <a href="/warehouse/scan" class="nav-btn">📷 Warehouse Scanner</a>
+        <a href="/register" class="nav-btn" style="background: #00A651; color: white; border-color: #00A651;">+ Add Rider</a>
+    </div>
 </div>
 
 <div class="container">
@@ -31,18 +50,15 @@
 
         <form action="/warehouse/bulk-intake" method="post" style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
             <input type="text" name="sellerName" value="Joss Fashion Store" required style="padding: 10px; border-radius: 5px; border: 1px solid #ccc; flex-grow: 1;" placeholder="Seller Name">
-
             <input type="number" name="count" value="10" min="1" max="500" required style="padding: 10px; border-radius: 5px; border: 1px solid #ccc; width: 100px;" placeholder="Qty">
-
             <button type="submit" class="btn">Receive Parcels</button>
         </form>
 
         <div style="margin-top: 15px;">
-            <a href="/warehouse/scan" class="btn" style="background: #E30613;">Start Scanning & Sorting</a>
+            <a href="/warehouse/scan" class="btn btn-red">Start Scanning & Sorting</a>
         </div>
     </div>
 
-    <!-- ALL DELIVERIES -->
     <!-- ALL DELIVERIES -->
     <h2>All Deliveries</h2>
     <table>
@@ -62,34 +78,59 @@
         <tr th:each="order : ${allOrders}">
             <!-- ACTION COLUMN -->
             <td>
-                <!-- If it has no receiver address, we must scan the seller's barcode first -->
-                <a th:if="${order.receiverAddress == null}" th:href="@{/admin/scan-seller-barcode/{id}(id=${order.id})}" class="btn" style="background: #E30613;">Scan Seller Barcode</a>
+                <!-- B2C FLOW: Customer booked online, needs rider assignment -->
+                <a th:if="${order.status == 'AWAITING_PICKUP'}"
+                   th:href="@{/admin/assign-rider/{id}(id=${order.id})}"
+                   class="btn btn-green">Assign Rider (B2C)</a>
 
-                <!-- If it has an address but no rider, we can assign it -->
-                <a th:if="${order.receiverAddress != null and order.rider == null}" th:href="@{/admin/assign-rider/{id}(id=${order.id})}" class="btn" style="background: #00A651;">Assign Rider</a>
+                <!-- B2B FLOW 1: Waiting for Barcode Scan -->
+                <a th:if="${order.status == 'AWAITING_WEIGH_IN' and order.receiverAddress == null}"
+                   th:href="@{/admin/scan-seller-barcode/{id}(id=${order.id})}"
+                   class="btn btn-red">Scan Seller Barcode (B2B)</a>
 
-                <!-- If assigned, show the rider's name -->
+                <!-- B2B FLOW 2: Scanned, waiting for Weight -->
+                <a th:if="${order.status == 'SCANNED'}"
+                   th:href="@{/warehouse/scan}"
+                   class="btn btn-yellow">Weigh at Station (B2B)</a>
+
+                <!-- B2B FLOW 3: Sorted, waiting for Rider Assignment -->
+                <a th:if="${order.status == 'SORTED'}"
+                   th:href="@{/admin/assign-rider/{id}(id=${order.id})}"
+                   class="btn btn-green">Assign Rider (B2B)</a>
+
+                <!-- If assigned, show rider name -->
                 <span th:if="${order.rider != null}" th:text="${order.rider.fullName}" style="font-weight: bold; color: blue;"></span>
             </td>
 
             <td th:text="${order.trackingId != null ? order.trackingId : 'Pending'}"></td>
             <td th:text="${order.id}"></td>
-            <td th:text="${order.receiverAddress != null ? order.receiverAddress : 'Awaiting Scan'}"></td>
+
+            <!-- RECEIVER ADDRESS: Show customer name for B2C, or address for B2B -->
+            <td>
+                <span th:if="${order.receiverAddress != null}" th:text="${order.receiverAddress}"></span>
+                <span th:if="${order.receiverAddress == null and order.customer != null}" th:text="${order.customer.fullName} + ' (B2C)'"></span>
+                <span th:if="${order.receiverAddress == null and order.customer == null}" style="color: #aaa;">Awaiting Scan</span>
+            </td>
+
             <td th:text="${order.weightInKg} + ' kg'"></td>
             <td th:text="${order.price} + ' VT'"></td>
             <td th:text="${order.rider != null ? order.rider.fullName : 'Unassigned'}"></td>
 
             <!-- STATUS COLUMN -->
             <td>
+                <span th:if="${order.status == 'AWAITING_PICKUP'}" class="status-pickup">AWAITING PICKUP</span>
+                <span th:if="${order.status == 'AWAITING_WEIGH_IN'}" style="color: red; font-weight: bold;">AWAITING SCAN</span>
+                <span th:if="${order.status == 'SCANNED'}" class="status-scanned" th:text="${order.status}"></span>
+                <span th:if="${order.status == 'SORTED'}" class="status-sorted" th:text="${order.status}"></span>
                 <span th:if="${order.status == 'ASSIGNED'}" class="status-assigned" th:text="${order.status}"></span>
                 <span th:if="${order.status == 'PICKED_UP'}" class="status-picked" th:text="${order.status}"></span>
                 <span th:if="${order.status == 'DELIVERED'}" class="status-delivered" th:text="${order.status}"></span>
-                <span th:if="${order.receiverAddress == null}" style="color: red; font-weight: bold;">AWAITING SCAN</span>
             </td>
         </tr>
         </tbody>
     </table>
 
+    <!-- RIDER LOADING BAGS -->
     <h3 style="margin-top: 40px;">Rider Loading Bags</h3>
     <table>
         <thead>
@@ -101,20 +142,18 @@
         </tr>
         </thead>
         <tbody>
-        <!-- We will loop through riders here -->
         <tr th:each="rider : ${riders}">
             <td th:text="${rider.fullName}"></td>
-            <!-- In a full build, we would query the DB for their parcel count -->
-            <td>3 Parcels</td>
-            <td>6.0 kg</td>
+            <td th:text="${riderBagCounts.get(rider.id)} + ' Parcels'"></td>
+            <td th:text="${riderBagWeights.get(rider.id)} + ' kg'"></td>
             <td>
-                <a href="#" class="btn" style="background: #00A651;">Print Rider Manifest</a>
+                <a th:href="@{/rider-portal/{id}(id=${rider.id})}" class="btn btn-green">View Rider Portal</a>
             </td>
         </tr>
         </tbody>
     </table>
 
-    <!-- --- RIDER FLEET SECTION --- -->
+    <!-- REGISTERED RIDERS (Fleet) -->
     <h3 style="margin-top: 40px;">Registered Riders (Fleet)</h3>
     <table>
         <thead>

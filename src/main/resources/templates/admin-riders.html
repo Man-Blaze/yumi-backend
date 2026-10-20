@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - Fleet Management</title>
+    <style>
+        body { font-family: Arial; background-color: #f4f4f4; padding: 20px; margin: 0; }
+        .header { background: black; color: #FFD100; padding: 20px; text-align: center; border-radius: 10px 10px 0 0; max-width: 1000px; margin: 0 auto; }
+        .container { max-width: 1000px; margin: 0 auto 40px auto; background: white; padding: 20px; border-radius: 0 0 10px 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
+        th { background-color: #FFD100; color: black; }
+        .btn { background: #000; color: #FFD100; padding: 8px 12px; text-decoration: none; border-radius: 5px; font-weight: bold; font-size: 14px;}
+        .btn-green { background: #00A651; color: white; }
+    </style>
+</head>
+<body>
+<div class="header">
+    <h1>YumiExpress Fleet Management</h1>
+    <p>All Registered Riders</p>
+
+    <!-- NAVIGATION MENU -->
+    <div style="margin-top: 15px; display: flex; justify-content: center; gap: 10px; flex-wrap: wrap;">
+        <a href="/admin-portal" style="color: #FFD100; text-decoration: none; padding: 10px 15px; font-weight: bold; border: 1px solid #FFD100; border-radius: 5px;">📦 All Orders</a>
+        <a href="/admin/riders" style="background: #FFD100; color: black; text-decoration: none; padding: 10px 15px; font-weight: bold; border-radius: 5px;">🛵 Riders</a>
+        <a href="/admin/customers" style="color: #FFD100; text-decoration: none; padding: 10px 15px; font-weight: bold; border: 1px solid #FFD100; border-radius: 5px;">👤 Customers</a>
+        <a href="/register" style="background: #00A651; color: white; text-decoration: none; padding: 10px 15px; font-weight: bold; border-radius: 5px;">+ Add Rider</a>
+    </div>
+</div>
+
+<div class="container">
+    <h2>Registered Riders (Fleet)</h2>
+    <table>
+        <thead>
+        <tr>
+            <th>Rider ID</th>
+            <th>Name</th>
+            <th>Phone</th>
+            <th>Vehicle</th>
+            <th>Pay Rate (VT)</th>
+            <th>Status</th>
+            <th>Action</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="rider : ${riders}">
+            <td th:text="${rider.id}"></td>
+            <td th:text="${rider.fullName}"></td>
+            <td th:text="${rider.phoneNumber}"></td>
+            <td th:text="${rider.vehicleType}"></td>
+            <td th:text="${rider.payRate}"></td>
+            <td>
+                <span th:if="${rider.available}" style="color: green; font-weight: bold;">AVAILABLE</span>
+                <span th:if="${!rider.available}" style="color: red; font-weight: bold;">OFFLINE</span>
+            </td>
+            <td>
+                <!-- Link to view the rider's live dashboard -->
+                <a th:href="@{/rider-portal/{id}(id=${rider.id})}" class="btn btn-green" target="_blank">View Live Portal</a>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+</div>
+</body>
+</html>
