@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Receiver Sign-Off - YumiExpress</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body { font-family: Arial; background-color: #FFD100; padding: 20px; text-align: center; }
+        .container { background: white; padding: 30px; border-radius: 10px; max-width: 400px; margin: 0 auto; box-shadow: 0 4px 8px rgba(0,0,0,0.2); }
+        .btn { background-color: #00A651; color: white; padding: 15px 30px; font-size: 20px; border: none; border-radius: 5px; font-weight: bold; cursor: pointer; width: 100%; margin-top: 20px;}
+        .signature-box { border: 2px dashed #ccc; height: 100px; margin: 20px 0; display: flex; align-items: center; justify-content: center; color: #888; font-style: italic; background: #f9f9f9;}
+        .order-info { text-align: left; background: #f0f0f0; padding: 15px; border-radius: 5px; margin-bottom: 20px;}
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1 style="color: #000;">Confirm Receipt</h1>
+    <p>Hello! Mary is here with your parcel.</p>
+
+    <div class="order-info">
+        <p><strong>Order ID:</strong> #<span th:text="${order.id}"></span></p>
+        <p><strong>Tracking ID:</strong> <span th:text="${order.trackingId}"></span></p>
+        <p><strong>Total Paid:</strong> <span th:text="${order.price}"></span> VT</p>
+        <p><strong>Rider:</strong> <span th:text="${order.rider.fullName}"></span></p>
+    </div>
+
+    <p style="font-weight: bold;">Tap below to sign for your package.</p>
+
+    <!-- In a real app, this would be a canvas for a signature drawing -->
+    <div class="signature-box">✍️ Tap to Sign</div>
+
+    <form th:action="@{/receiver/sign-off/{id}(id=${order.id})}" method="post">
+        <button type="submit" class="btn">Sign & Accept Parcel</button>
+    </form>
+</div>
+</body>
+</html>

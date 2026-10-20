@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verify Code</title>
+    <style>
+        body { font-family: Arial; background-color: #FFD100; padding: 20px; text-align: center; }
+        .box { background: white; padding: 30px; border-radius: 10px; max-width: 350px; margin: 0 auto; box-shadow: 0 4px 8px rgba(0,0,0,0.2); }
+        input { width: 100%; padding: 15px; margin: 10px 0; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; font-size: 24px; text-align: center; letter-spacing: 10px;}
+        .btn { background: black; color: #FFD100; padding: 15px; width: 100%; border: none; font-weight: bold; font-size: 18px; border-radius: 5px; margin-top: 10px;}
+        .sms-alert { background: #e6f7eb; border: 1px solid #00A651; padding: 10px; margin-bottom: 15px; font-size: 14px; }
+    </style>
+</head>
+<body>
+<div class="box">
+    <h2>Enter Confirmation Code</h2>
+    <p>We sent a 4-digit code to <strong th:text="${phoneNumber}"></strong></p>
+
+    <!-- This simulates the SMS the user receives -->
+    <div class="sms-alert">
+        <strong>📱 SMS SIMULATION:</strong><br>
+        YumiExpress code is <strong>1234</strong>. Enter it to verify your account.
+    </div>
+
+    <form action="/verify-otp" method="post">
+        <input type="hidden" name="phoneNumber" th:value="${phoneNumber}">
+
+        <label>Enter 4-digit Code:</label>
+        <input type="text" name="otpCode" required maxlength="4" placeholder="0000">
+
+        <button type="submit" class="btn">Verify & Create Account</button>
+    </form>
+</div>
+</body>
+</html>

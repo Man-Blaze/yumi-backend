@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YumiExpress Registration</title>
+    <style>
+        body { font-family: Arial; background-color: #FFD100; padding: 20px; text-align: center; }
+        .box { background: white; padding: 30px; border-radius: 10px; max-width: 350px; margin: 0 auto; box-shadow: 0 4px 8px rgba(0,0,0,0.2); }
+        input { width: 100%; padding: 15px; margin: 10px 0; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; font-size: 16px; }
+        .btn { background: black; color: #FFD100; padding: 15px; width: 100%; border: none; font-weight: bold; font-size: 18px; border-radius: 5px; margin-top: 10px;}
+    </style>
+</head>
+<body>
+<div class="box">
+    <h2>Welcome to YumiExpress</h2>
+    <p>Enter your phone number to get started.</p>
+
+    <form action="/send-otp" method="post">
+        <label>Phone Number:</label>
+        <input type="text" name="phoneNumber" required placeholder="+678 555 1234">
+
+        <button type="submit" class="btn">Send Confirmation Code</button>
+    </form>
+</div>
+</body>
+</html>

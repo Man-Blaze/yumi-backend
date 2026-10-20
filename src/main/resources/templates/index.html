@@ -1,19 +1,50 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>YumiExpress</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YumiExpress - Port Vila's Delivery Network</title>
     <style>
-        body { font-family: Arial; background-color: #FFD100; text-align: center; padding: 50px; }
-        h1 { font-size: 50px; margin-bottom: 0; }
-        .box { background: white; padding: 40px; border-radius: 10px; display: inline-block; box-shadow: 0 4px 8px rgba(0,0,0,0.2); }
-        .btn { background: black; color: #FFD100; padding: 15px 30px; text-decoration: none; font-weight: bold; border-radius: 5px; display: inline-block; margin-top: 20px; font-size: 20px; }
+        body { font-family: Arial, sans-serif; background-color: #FFD100; text-align: center; padding: 40px 20px; margin: 0; }
+        h1 { font-size: 48px; margin-bottom: 5px; color: black; letter-spacing: 1px;}
+        p.tagline { font-size: 18px; font-weight: bold; margin-bottom: 30px; color: black;}
+
+        .box { background: white; padding: 40px; border-radius: 10px; display: inline-block; box-shadow: 0 4px 15px rgba(0,0,0,0.2); max-width: 400px; width: 100%; box-sizing: border-box;}
+
+        .btn { padding: 15px 20px; text-decoration: none; font-weight: bold; border-radius: 5px; display: block; margin-top: 15px; font-size: 18px; transition: 0.2s;}
+        .btn-black { background: black; color: #FFD100; }
+        .btn-black:hover { background: #333; }
+        .btn-outline { background: white; color: black; border: 2px solid black; }
+        .btn-outline:hover { background: #f0f0f0; }
+
+        .divider { border-top: 2px dashed #ddd; margin: 30px 0; }
+        .role-title { font-size: 14px; font-weight: bold; color: #888; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px;}
     </style>
 </head>
 <body>
+
 <div class="box">
     <h1>YumiExpress</h1>
-    <p>Trust. Convenient. Speed. Never Give Up.</p>
-    <a href="/book" class="btn">Book a Delivery</a>
+    <p class="tagline">Trust. Convenient. Speed. Never Give Up.</p>
+
+    <div class="role-title">For Customers</div>
+    <a href="/customer-register" class="btn btn-black">Register (Scan & Go)</a>
+    <a href="/book" class="btn btn-outline">Book a Delivery</a>
+    <div class="divider"></div>
+
+    <div class="role-title">For Sellers & Businesses</div>
+    <a href="/seller-login" class="btn btn-black" style="background: #00A651;">Seller Portal Login</a>
+
+    <div class="divider"></div>
+
+    <div class="role-title">For Riders</div>
+    <a href="/rider-portal/1" class="btn btn-black">Rider Dashboard (Demo ID 1)</a>
+
+    <div class="divider"></div>
+
+    <div class="role-title">For Admin</div>
+    <a href="/admin-portal" class="btn btn-black">Operations Center</a>
+    <a href="/register" class="btn btn-outline">Onboard New Rider</a>
 </div>
+
 </body>
 </html>

@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Seller Portal - YumiExpress</title>
+    <style>
+        body { font-family: Arial; background-color: #FFD100; padding: 40px 20px; text-align: center; }
+        .box { background: white; padding: 30px; border-radius: 10px; max-width: 400px; margin: 0 auto; box-shadow: 0 4px 8px rgba(0,0,0,0.2); text-align: left;}
+        input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; }
+        .btn { background: black; color: #FFD100; padding: 15px; width: 100%; border: none; font-weight: bold; font-size: 18px; border-radius: 5px; margin-top: 10px; cursor: pointer;}
+        .notice { font-size: 12px; color: #555; background: #f9f9f9; padding: 10px; border-left: 4px solid #00A651; margin-bottom: 20px;}
+    </style>
+</head>
+<body>
+<div class="box">
+    <h2>Seller Login</h2>
+    <div class="notice">
+        <strong>Verification Required:</strong> We cross-check your phone number with Vodafone and Digicel databases to verify your business.
+    </div>
+
+    <form action="/seller-dashboard" method="get">
+        <label>Business / Store Name:</label>
+        <input type="text" name="businessName" required placeholder="e.g., Joss Fashion Store">
+
+        <label>Phone Number:</label>
+        <input type="text" name="phoneNumber" required placeholder="+678 555 1234">
+
+        <label>Email Address:</label>
+        <input type="email" name="email" required placeholder="joss@example.com">
+
+        <button type="submit" class="btn">Verify & Enter Portal</button>
+    </form>
+</div>
+</body>
+</html>

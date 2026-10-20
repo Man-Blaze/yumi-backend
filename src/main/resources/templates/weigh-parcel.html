@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Weigh Parcel</title>
+    <style>
+        body { font-family: Arial; background-color: #FFD100; padding: 20px; text-align: center; }
+        .container { background: white; padding: 30px; border-radius: 10px; max-width: 400px; margin: 0 auto; }
+        input { width: 80%; padding: 15px; font-size: 24px; text-align: center; margin: 20px 0; border: 2px solid #000; border-radius: 5px; }
+        .btn { background: black; color: #FFD100; padding: 15px 30px; font-size: 20px; border: none; border-radius: 5px; font-weight: bold; cursor: pointer; width: 100%; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h2>Weigh Parcel</h2>
+    <p><strong>Order #<span th:text="${order.id}"></span></strong></p>
+    <p>Address: <span th:text="${order.pickupAddress}"></span></p>
+
+    <form th:action="@{/rider/weigh-parcel/{id}(id=${order.id})}" method="post">
+        <label style="font-size: 20px; font-weight: bold;">Exact Weight (kg):</label><br>
+        <input type="number" step="0.1" name="weight" required autofocus>
+
+        <button type="submit" class="btn">Calculate Price & Generate QR</button>
+    </form>
+</div>
+</body>
+</html>

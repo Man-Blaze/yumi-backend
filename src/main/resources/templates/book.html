@@ -1,25 +1,45 @@
 <!DOCTYPE html>
-<html>
+<html xmlns:th="http://www.thymeleaf.org">
 <head>
     <title>Book Delivery</title>
     <style>
         body { font-family: Arial; background-color: #FFD100; padding: 50px; }
-        .box { background: white; padding: 30px; border-radius: 10px; max-width: 400px; margin: 0 auto; }
+        .box { background: white; padding: 30px; border-radius: 10px; max-width: 400px; margin: 0 auto; box-shadow: 0 4px 8px rgba(0,0,0,0.2); }
         input { width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; }
-        .btn { background: black; color: #FFD100; padding: 15px; width: 100%; border: none; font-weight: bold; font-size: 18px; cursor: pointer; border-radius: 5px; }
+        .btn { background: black; color: #FFD100; padding: 15px; width: 100%; border: none; font-weight: bold; font-size: 18px; cursor: pointer; border-radius: 5px; margin-top: 10px;}
+        .profile-banner { background: #000; color: #FFD100; padding: 15px; border-radius: 5px; margin-bottom: 20px; text-align: center; font-weight: bold; }
     </style>
 </head>
 <body>
 <div class="box">
-    <h2>Book a Delivery</h2>
+    <!-- This only shows if the user is logged in -->
+    <div class="profile-banner" th:if="${customer != null}">
+        Welcome back, <span th:text="${customer.fullName}"></span>! <br>
+        <span style="font-size: 12px;">Verified Account | <span th:text="${customer.area}"></span></span>
+    </div>
+
+    <h2>Book a Pickup</h2>
+    <p style="font-size: 14px; color: #555;">A rider will arrive at your door to weigh and collect the parcel.</p>
+
     <form action="/submit-booking" method="post">
-        <label>Sender Name:</label>
-        <input type="text" name="senderName" required>
+            <!-- Hidden field to remember who is logged in -->
+            <input type="hidden" name="userId" th:value="${customer != null ? customer.id : ''}">
+            <!-- Simulating Joss's GPS location in Tagabe -->
+            <input type="hidden" name="lat" value="-17.73">
+            <input type="hidden" name="lng" value="168.31">
+            <label>Where will you be? (Exact Location):</label>
+            <input type="text" name="exactPickupLocation" required placeholder="e.g., Town, near the market">
 
-        <label>Parcel Weight (kg):</label>
-        <input type="number" step="0.1" name="weight" required>
+        <label>Receiver's Specific Address Details:</label>
+        <input type="text" name="specificAddressDetails" required placeholder="e.g., Blue house behind the church, ask for Aunty Leisav">
 
-        <button type="submit" class="btn">Confirm Booking</button>
+            <label>When should we meet you?</label>
+            <input type="time" name="pickupTime" required>
+
+            <label>Recipient Phone Number:</label>
+            <input type="text" name="recipientPhone" required>
+
+            <button type="submit" class="btn">Request Rider Pickup</button>
     </form>
 </div>
 </body>

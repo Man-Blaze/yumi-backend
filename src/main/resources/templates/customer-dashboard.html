@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>My Dashboard - YumiExpress</title>
+    <style>
+        body { font-family: Arial; background-color: #FFD100; padding: 20px; margin: 0; }
+        .header { background: black; color: #FFD100; padding: 20px; text-align: center; border-radius: 10px 10px 0 0; max-width: 600px; margin: 0 auto; }
+        .container { background: white; padding: 20px; border-radius: 0 0 10px 10px; max-width: 600px; margin: 0 auto; box-shadow: 0 4px 8px rgba(0,0,0,0.2); }
+        .card { border: 2px solid #000; padding: 15px; margin-bottom: 15px; border-radius: 5px; }
+        .btn { background: black; color: #FFD100; padding: 10px 15px; text-decoration: none; font-weight: bold; border-radius: 5px; display: inline-block; margin-top: 10px; }
+        .status { background: #FFD100; padding: 5px 10px; border-radius: 20px; font-size: 12px; font-weight: bold; }
+        .notification { background: #e6f7eb; border-left: 4px solid #00A651; padding: 10px; margin-bottom: 15px; }
+    </style>
+</head>
+<body>
+<div class="header">
+    <h1>Welcome, <span th:text="${customer.fullName}"></span>!</h1>
+    <p>Your Personal Dashboard</p>
+</div>
+
+<div class="container">
+    <!-- Notification Center -->
+    <h3>🔔 Notifications</h3>
+    <div class="notification">
+        <strong>System Message:</strong> Welcome to YumiExpress! Book your first delivery today.
+    </div>
+
+    <!-- Book New Delivery Button -->
+    <div style="text-align: center; margin-bottom: 20px;">
+        <a th:href="@{/book(userId=${customer.id})}" class="btn" style="font-size: 18px; width: 100%; box-sizing: border-box; text-align: center;">+ Book New Delivery</a>
+    </div>
+
+    <h3>Your Active Deliveries</h3>
+
+    <div th:if="${#lists.isEmpty(orders)}">
+        <p>You have no active deliveries right now.</p>
+    </div>
+
+    <!-- Loop through the customer's orders -->
+    <div class="card" th:each="order : ${orders}" th:if="${order != null}">
+        <p><strong>Order ID:</strong> <span th:text="${order.id}"></span></p>
+        <p><strong>Meet At:</strong> <span th:text="${order.exactPickupLocation}"></span></p>
+        <p><strong>Recipient Phone:</strong> <span th:text="${order.recipientPhone}"></span></p>
+        <p><strong>Status:</strong> <span class="status" th:text="${order.status}"></span></p>
+
+        <!-- Live Tracking Simulation -->
+        <div th:if="${order.rider != null and order.status != 'DELIVERED'}">
+            <p style="color: #00A651; font-weight: bold;">
+                🛵 Rider <span th:text="${order.rider.fullName}"></span> is on the way!
+            </p>
+            <p style="font-size: 12px; color: #555;">(Live GPS tracking will appear here in the mobile app).</p>
+        </div>
+    </div>
+</div>
+</body>
+</html>

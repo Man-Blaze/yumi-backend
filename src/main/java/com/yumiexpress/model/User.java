@@ -17,9 +17,16 @@ public class User {
     private String password;
     private String role; // "CUSTOMER" or "RIDER"
 
-    private String vehicleType;
+    private String vehicleType;// "COMPANY_SCOOTER", "OWN_SCOOTER", "COMPANY_TRUCK", "OWN_CAR"
     private boolean available;
     // NEW FIELDS FOR RIDERS
     private double currentLat;
     private double currentLng;
+
+    private String nationalId;
+    private String area;
+
+    // --- NEW FLEET & PAY FIELDS ---
+
+    private double payRate = 0.0;     // e.g., 300 VT per delivery for own scooter, 150 VT for company scooter
 }

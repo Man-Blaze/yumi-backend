@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Seller Dashboard - YumiExpress</title>
+    <style>
+        body { font-family: Arial; background-color: #f4f4f4; padding: 20px; margin: 0; }
+        .header { background: #00A651; color: white; padding: 20px; text-align: center; border-radius: 10px 10px 0 0; max-width: 600px; margin: 0 auto; }
+        .container { background: white; padding: 20px; border-radius: 0 0 10px 10px; max-width: 600px; margin: 0 auto; box-shadow: 0 4px 8px rgba(0,0,0,0.2); }
+        .stat-box { background: #f9f9f9; border: 1px solid #ddd; padding: 15px; border-radius: 8px; text-align: center; margin-bottom: 15px; }
+        .stat-number { font-size: 32px; font-weight: bold; color: #00A651; }
+        .btn { background: black; color: #FFD100; padding: 12px; text-decoration: none; font-weight: bold; border-radius: 5px; display: block; margin-top: 10px; text-align: center; border: none; cursor: pointer; font-size: 16px;}
+    </style>
+</head>
+<body>
+<div class="header">
+    <h1>Seller Portal</h1>
+    <h2 th:text="${businessName}">Business Name</h2>
+    <p>✅ Verified via Vodafone/Digicel</p>
+</div>
+
+<div class="container">
+    <h3>Your Delivery Performance</h3>
+
+    <div class="stat-box">
+        <p>Parcels Booked This Month</p>
+        <div class="stat-number">124</div>
+    </div>
+
+    <div class="stat-box">
+        <p>Delivery Success Rate</p>
+        <div class="stat-number" style="color: #000;">98%</div>
+    </div>
+
+    <h3>Bulk Actions</h3>
+    <p style="font-size: 14px; color: #555;">Upload a CSV of your daily/weekly orders, or book them one by one.</p>
+
+    <a href="#" class="btn">📁 Upload Bulk Orders (CSV)</a>
+    <a href="/book" class="btn" style="background: #00A651;">+ Book Single Delivery</a>
+
+    <div style="text-align: center; margin-top: 30px;">
+        <a href="/" style="color: #888; font-size: 14px;">Logout</a>
+    </div>
+</div>
+</body>
+</html>

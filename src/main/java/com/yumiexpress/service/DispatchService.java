@@ -21,10 +21,11 @@ public class DispatchService {
     @Autowired
     private RoutingService routingService;
 
-    // The maximum weight a scooter can carry
-    private static final double MAX_SCOOTER_CAPACITY = 15.0;
+    // Max scooter capacity
+    private static final double MAX_CAPACITY_KG = 15.0;
 
     public User assignBestRider(Order newOrder) {
+        // 1. Get all riders who are online
         List<User> availableRiders = userRepository.findAll().stream()
                 .filter(user -> "RIDER".equals(user.getRole()) && user.isAvailable())
                 .toList();
@@ -36,20 +37,22 @@ public class DispatchService {
 
         for (User rider : availableRiders) {
 
-            // 1. THE KNAPSACK CHECK: How much is this rider already carrying?
-            double currentLoad = calculateCurrentLoad(rider);
+            // 2. KNAPSACK CHECK: How much weight is this rider already carrying?
+            List<Order> activeOrders = orderRepository.findByRiderAndStatus(rider, "ASSIGNED");
+            double currentLoad = activeOrders.stream().mapToDouble(Order::getWeightInKg).sum();
 
-            // 2. If the rider's current load + the new order exceeds 15kg, skip them!
-            if ((currentLoad + newOrder.getWeightInKg()) > MAX_SCOOTER_CAPACITY) {
+            // If adding this new order breaks the 15kg limit, skip this rider
+            if ((currentLoad + newOrder.getWeightInKg()) > MAX_CAPACITY_KG) {
                 continue;
             }
 
-            // 3. THE TSP CHECK: If they have space, are they the closest?
+            // 3. TSP CHECK: How far is the rider from the pickup location?
             double distance = routingService.calculateDistance(
                     rider.getCurrentLat(), rider.getCurrentLng(),
                     newOrder.getPickupLat(), newOrder.getPickupLng()
             );
 
+            // If this rider is closer than the previous best, make them the new best
             if (distance < shortestDistance) {
                 shortestDistance = distance;
                 bestRider = rider;
@@ -57,16 +60,5 @@ public class DispatchService {
         }
 
         return bestRider;
-    }
-
-    // Helper method to calculate a rider's current weight
-    private double calculateCurrentLoad(User rider) {
-        // Find all orders assigned to this rider that are not yet delivered
-        List<Order> activeOrders = orderRepository.findByRiderAndStatus(rider, "ASSIGNED");
-
-        // Add up their weights
-        return activeOrders.stream()
-                .mapToDouble(Order::getWeightInKg)
-                .sum();
     }
 }

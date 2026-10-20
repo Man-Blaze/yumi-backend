@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>YumiExpress Receipt</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f4f4; padding: 20px; margin: 0; }
+        .receipt-container { background: white; max-width: 450px; margin: 0 auto; box-shadow: 0 10px 20px rgba(0,0,0,0.1); border-radius: 10px; overflow: hidden; }
+        .header { background-color: #FFD100; padding: 25px; text-align: center; }
+        .header h1 { margin: 0; font-size: 32px; color: black; font-weight: 800; letter-spacing: 1px;}
+        .header p { margin: 5px 0 0 0; font-weight: bold; color: black; }
+        .body { padding: 30px; }
+        .badge { background: #00A651; color: white; padding: 8px 15px; border-radius: 20px; font-weight: bold; font-size: 14px; display: inline-block; margin-bottom: 20px;}
+        .details { border-bottom: 1px dashed #ccc; padding-bottom: 15px; margin-bottom: 15px; }
+        .details p { margin: 8px 0; display: flex; justify-content: space-between; font-size: 15px; }
+        .total { font-size: 24px; font-weight: bold; text-align: right; margin-top: 20px; }
+        .sms-box { background: #e6f7eb; border: 1px solid #00A651; border-radius: 8px; padding: 15px; margin-top: 25px; font-size: 13px; color: #333; }
+        .sms-box strong { color: #00A651; }
+        .btn { display: block; text-align: center; background: black; color: #FFD100; padding: 15px; text-decoration: none; font-weight: bold; font-size: 18px; border-radius: 5px; margin-top: 20px; }
+    </style>
+</head>
+<body>
+<div class="receipt-container">
+    <div class="header">
+        <h1>YumiExpress</h1>
+        <p>Trust. Convenient. Speed. Never Give Up.</p>
+    </div>
+
+    <div class="body">
+        <div class="badge">✅ PAID VIA M-VATU</div>
+
+        <div class="details">
+            <p><strong>Receipt No:</strong> <span th:text="${order.trackingId}"></span></p>
+            <p><strong>Order ID:</strong> #<span th:text="${order.id}"></span></p>
+            <p><strong>Pickup:</strong> <span th:text="${order.pickupAddress}"></span></p>
+            <p><strong>Recipient Phone:</strong> <span th:text="${order.recipientPhone}"></span></p>
+            <p><strong>Rider:</strong> <span th:text="${order.rider != null ? order.rider.fullName : 'Pending'}"></span></p>
+        </div>
+
+        <div class="details" style="border-bottom: none;">
+            <p><strong>Parcel Weight:</strong> <span th:text="${order.weightInKg} + ' kg'"></span></p>
+            <p><strong>M-Vatu Ref:</strong> <span th:text="${order.m_vatu_reference}"></span></p>
+        </div>
+
+        <div class="total">
+            Total: <span th:text="${order.price}"></span> VT
+        </div>
+
+        <div class="sms-box">
+            <strong>📱 SMS SENT TO JOSS (+678 ${order.recipientPhone}):</strong><br>
+            "YumiExpress: Payment of <span th:text="${order.price}"></span> VT received. Rider <span th:text="${order.rider.fullName}"></span> is on the way with your parcel. Track here: yumiexpress.vu/track/<span th:text="${order.trackingId}"></span>"
+        </div>
+
+        <a th:href="@{/rider-portal/{id}(id=${order.rider.id})}" class="btn">Back to Rider Dashboard</a>
+    </div>
+</div>
+</body>
+</html>

@@ -23,16 +23,23 @@ public class SecurityConfig {
                 .httpBasic(basic -> basic.disable())
                 .formLogin(form -> form.disable())
                 .authorizeHttpRequests(auth -> auth
-                        // ALLOW these endpoints without needing a token!
-                        .requestMatchers("/", "/book", "/submit-booking").permitAll()
-                        .requestMatchers("/css/**", "/js/**", "/images/**").permitAll()
+                        // 1. Allow ALL Web Pages and Form Submissions
+                        .requestMatchers("/", "/register", "/login", "/process-register", "/process-login", "/book", "/submit-booking", "/success", "/receipt/**").permitAll()
+                        .requestMatchers("/customer-register", "/send-otp", "/verify-otp", "/customer-dashboard/**", "/rate-order/**").permitAll()
+
+                        // 2. Allow Rider & Admin Portals AND form submissions
                         .requestMatchers("/rider-portal/**", "/rider/**").permitAll()
-                        .requestMatchers("/admin-portal").permitAll() // <--- ADD THIS
+                        .requestMatchers("/admin-portal", "/admin/assign-rider/**").permitAll()
+
+                        // 3. Allow API Endpoints
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/api/orders/book").permitAll()
                         .requestMatchers("/api/orders/confirm-payment").permitAll()
-
-                        // EVERYTHING ELSE requires a token
+                        .requestMatchers("/api/orders/*/qrcode").permitAll()
+                        .requestMatchers("/receiver/**").permitAll()
+                        .requestMatchers("/seller-login", "/seller-dashboard").permitAll()
+                        .requestMatchers("/warehouse/**").permitAll()
+                        // Everything else requires a token
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
