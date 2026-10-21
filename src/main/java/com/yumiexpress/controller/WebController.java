@@ -231,12 +231,14 @@ public class WebController {
                                        @RequestParam String sellerBarcode,
                                        @RequestParam String receiverAddress,
                                        @RequestParam String specificAddressDetails,
+                                       @RequestParam String recipientPhone, // <--- Add this
                                        @RequestParam String zone) {
         Order order = orderRepository.findById(id).orElseThrow();
 
         order.setSellerTrackingNumber(sellerBarcode);
         order.setReceiverAddress(receiverAddress);
         order.setSpecificAddressDetails(specificAddressDetails);
+        order.setRecipientPhone(recipientPhone); // <--- Save it
         order.setDeliveryZone(zone);
         order.setTrackingId("YE-" + (10000 + new java.util.Random().nextInt(90000)));
         order.setStatus("SCANNED"); // Ready for the Sorting Station
@@ -320,7 +322,7 @@ public class WebController {
         model.addAttribute("tasks", tasks);
         return "rider-dashboard";
     }
-
+    @CrossOrigin(origins = "*") // <--- ADD THIS
     @GetMapping("/rider/update-status/{id}")
     public String updateRiderStatus(@PathVariable Long id, @RequestParam String status) {
         Order order = orderRepository.findById(id).orElseThrow();
@@ -365,15 +367,21 @@ public class WebController {
     @PostMapping("/rider/weigh-parcel/{id}")
     public String processWeighParcel(@PathVariable Long id, @RequestParam double weight) {
         Order order = orderRepository.findById(id).orElseThrow();
+
+        // 1. Calculate price and generate QR
         order.setWeightInKg(weight);
         order.setPrice(pricingService.calculatePrice(weight));
-        if (order.getTrackingId() == null) {
-            order.setTrackingId("YE-" + (10000 + new java.util.Random().nextInt(90000)));
-        }
-        paymentService.createPaymentRequest(order);
-        paymentService.confirmPayment(order.getM_vatu_reference());
-        order.setStatus("ASSIGNED");
+        order.setTrackingId("YE-" + (10000 + new java.util.Random().nextInt(90000)));
+
+        // 2. Customer pays via M-Vatu (simulated)
+        order.setM_vatu_reference("CASH-" + (1000 + new java.util.Random().nextInt(9000)));
+
+        // 3. Mark as PICKED_UP because the rider now has the parcel
+        order.setStatus("PICKED_UP");
         orderRepository.save(order);
+
+        System.out.println("⚖️ B2C Parcel Weighed: " + order.getTrackingId() + " | Price: " + order.getPrice() + " VT | Payment: " + order.getM_vatu_reference());
+
         return "redirect:/receipt/" + order.getId();
     }
 
@@ -387,15 +395,24 @@ public class WebController {
         return "sign-off";
     }
 
+    @CrossOrigin(origins = "*")
     @PostMapping("/receiver/sign-off/{id}")
-    public String processSignOff(@PathVariable Long id) {
+    public org.springframework.http.ResponseEntity<String> processSignOff(@PathVariable Long id) {
         Order order = orderRepository.findById(id).orElseThrow();
+
+        // 1. Update order status
         order.setStatus("DELIVERED");
         orderRepository.save(order);
+
+        // 2. Finalize Payment
         paymentService.processPayment(order);
+
+        // 3. Log the event
         System.out.println("\n🚨 FINAL DELIVERY ALERT 🚨");
         System.out.println("Order #" + order.getId() + " (Tracking: " + order.getTrackingId() + ") has been DELIVERED and SIGNED for.");
-        return "redirect:/receipt/" + order.getId();
+
+        // 4. Return a simple success message instead of a redirect
+        return org.springframework.http.ResponseEntity.ok("Success");
     }
 
     @GetMapping("/receipt/{orderId}")
@@ -431,5 +448,62 @@ public class WebController {
             userRepository.save(user);
         }
         return "redirect:/customer-dashboard/" + user.getId();
+    }
+    // ==========================================
+    // 8. ADMIN CONTROL PANEL (Edit & Cancel)
+    // ==========================================
+
+    // 1. Show the Edit Order page
+    @GetMapping("/admin/edit-order/{id}")
+    public String showEditOrderPage(@PathVariable Long id, Model model) {
+        Order order = orderRepository.findById(id).orElseThrow();
+        List<User> riders = userRepository.findAll().stream()
+                .filter(u -> "RIDER".equals(u.getRole()))
+                .toList();
+        model.addAttribute("order", order);
+        model.addAttribute("riders", riders);
+        return "admin-edit-order";
+    }
+
+    // 2. Save the edits
+    @PostMapping("/admin/edit-order/{id}")
+    public String processEditOrder(
+            @PathVariable Long id,
+            @RequestParam String receiverAddress,
+            @RequestParam String specificAddressDetails,
+            @RequestParam String recipientPhone,
+            @RequestParam(required = false) Long riderId,
+            @RequestParam String status) {
+
+        Order order = orderRepository.findById(id).orElseThrow();
+
+        // Update details
+        order.setReceiverAddress(receiverAddress);
+        order.setSpecificAddressDetails(specificAddressDetails);
+        order.setRecipientPhone(recipientPhone);
+        order.setStatus(status);
+
+        // Update Rider
+        if (riderId != null) {
+            User rider = userRepository.findById(riderId).orElse(null);
+            order.setRider(rider);
+        } else {
+            order.setRider(null);
+        }
+
+        orderRepository.save(order);
+        System.out.println("✏️ Admin edited Order #" + id);
+        return "redirect:/admin-portal";
+    }
+
+    // 3. Cancel an order
+    @GetMapping("/admin/cancel-order/{id}")
+    public String cancelOrder(@PathVariable Long id) {
+        Order order = orderRepository.findById(id).orElseThrow();
+        order.setStatus("CANCELLED");
+        order.setRider(null); // Unassign rider
+        orderRepository.save(order);
+        System.out.println("❌ Admin cancelled Order #" + id);
+        return "redirect:/admin-portal";
     }
 }

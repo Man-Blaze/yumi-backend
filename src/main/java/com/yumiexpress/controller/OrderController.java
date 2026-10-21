@@ -12,9 +12,13 @@ import com.yumiexpress.util.QrCodeGenerator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.CrossOrigin;
 
+import java.security.Principal;
 import java.util.List;
+import java.util.Map;
 
+@CrossOrigin(origins = "*")
 @RestController
 @RequestMapping("/api/orders")
 public class OrderController {
@@ -128,5 +132,34 @@ public class OrderController {
         return ResponseEntity.ok()
                 .header("Content-Type", "image/png")
                 .body(image);
+    }
+    // Endpoint to process multiple parcels at once for a B2C customer
+    @CrossOrigin(origins = "*")
+    @PostMapping("/book-bulk")
+    public String bookBulkParcels(@RequestBody List<Map<String, Object>> parcels) {
+        double totalPrice = 0;
+
+        for (Map<String, Object> parcelData : parcels) {
+            Order order = new Order();
+            order.setWeightInKg(Double.parseDouble(parcelData.get("weight").toString()));
+            order.setPrice(pricingService.calculatePrice(order.getWeightInKg()));
+            order.setStatus("PICKED_UP");
+            order.setTrackingId("YE-" + (10000 + new java.util.Random().nextInt(90000)));
+            order.setPickupAddress(parcelData.get("customerName").toString());
+            order.setRecipientPhone(parcelData.get("phone").toString());
+
+            // NEW: Link the rider
+            if (parcelData.containsKey("riderId")) {
+                Long riderId = Long.parseLong(parcelData.get("riderId").toString());
+                User rider = userRepository.findById(riderId).orElse(null);
+                order.setRider(rider);
+            }
+
+            totalPrice += order.getPrice();
+            orderRepository.save(order);
+        }
+
+        System.out.println("📦 Bulk Booking: Processed " + parcels.size() + " parcels. Total: " + totalPrice + " VT");
+        return "Success";
     }
 }

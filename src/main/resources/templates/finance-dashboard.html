@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Finance & CEO Dashboard - YumiExpress</title>
+    <style>
+        body { font-family: Arial; background-color: #f4f4f4; padding: 20px; margin: 0; }
+        .header { background: black; color: #FFD100; padding: 20px; text-align: center; border-radius: 10px 10px 0 0; max-width: 1000px; margin: 0 auto; }
+        .container { max-width: 1000px; margin: 0 auto 40px auto; background: white; padding: 20px; border-radius: 0 0 10px 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 20px; }
+        .card { padding: 20px; border-radius: 8px; text-align: center; color: white; }
+        .card-green { background: #00A651; }
+        .card-red { background: #E30613; }
+        .card-black { background: #000; color: #FFD100; }
+        .card-blue { background: #007BFF; }
+        .number { font-size: 36px; font-weight: bold; margin: 10px 0; }
+        .label { font-size: 14px; text-transform: uppercase; opacity: 0.8; }
+        .btn { background: black; color: #FFD100; padding: 10px 20px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block; margin-top: 20px;}
+    </style>
+</head>
+<body>
+<div class="header">
+    <h1>YumiExpress Financial Control</h1>
+    <p>CEO & Finance Master Dashboard</p>
+    <a href="/admin-portal" style="color: #FFD100; font-size: 14px;">← Back to Operations</a>
+</div>
+
+<div class="container">
+    <div class="grid">
+        <!-- REVENUE -->
+        <div class="card card-green">
+            <div class="label">Total Revenue (Delivered/Picked Up)</div>
+            <div class="number" th:text="${totalRevenue} + ' VT'"></div>
+        </div>
+
+        <!-- NET PROFIT -->
+        <div class="card card-black">
+            <div class="label">Net Profit</div>
+            <div class="number" th:text="${netProfit} + ' VT'"></div>
+        </div>
+
+        <!-- RIDER PAYOUTS -->
+        <div class="card card-blue">
+            <div class="label">Total Rider Payouts</div>
+            <div class="number" th:text="${totalRiderPayouts} + ' VT'"></div>
+        </div>
+
+        <!-- FUEL COSTS -->
+        <div class="card card-red">
+            <div class="label">Estimated Fuel Costs</div>
+            <div class="number" th:text="${estimatedFuelCost} + ' VT'"></div>
+        </div>
+    </div>
+
+    <div style="text-align: center; margin-top: 30px;">
+        <h3>Total Deliveries Completed: <span th:text="${totalDeliveries}"></span></h3>
+    </div>
+</div>
+</body>
+</html>

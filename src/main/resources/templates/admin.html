@@ -24,6 +24,7 @@
         .btn-green { background: #00A651; color: white; }
         .btn-red { background: #E30613; color: white; }
         .btn-yellow { background: #FFD100; color: black; }
+        .btn-small { padding: 4px 8px; font-size: 11px; }
         .warehouse-box { background: #f9f9f9; padding: 20px; border-radius: 8px; margin-bottom: 30px; border: 2px dashed #000; }
     </style>
 </head>
@@ -39,6 +40,7 @@
         <a href="/admin/customers" class="nav-btn">👤 Customers</a>
         <a href="/warehouse/scan" class="nav-btn">📷 Warehouse Scanner</a>
         <a href="/register" class="nav-btn" style="background: #00A651; color: white; border-color: #00A651;">+ Add Rider</a>
+        <a href="/finance-dashboard" class="nav-btn" style="background: #007BFF; color: white; border-color: #007BFF;">💰 Finance / CEO</a>
     </div>
 </div>
 
@@ -72,40 +74,36 @@
             <th>Price (VT)</th>
             <th>Rider Assigned</th>
             <th>Status</th>
+            <th>Manage</th> <!-- NEW COLUMN -->
         </tr>
         </thead>
         <tbody>
         <tr th:each="order : ${allOrders}">
             <!-- ACTION COLUMN -->
             <td>
-                <!-- B2C FLOW: Customer booked online, needs rider assignment -->
                 <a th:if="${order.status == 'AWAITING_PICKUP'}"
                    th:href="@{/admin/assign-rider/{id}(id=${order.id})}"
-                   class="btn btn-green">Assign Rider (B2C)</a>
+                   class="btn btn-green btn-small">Assign B2C</a>
 
-                <!-- B2B FLOW 1: Waiting for Barcode Scan -->
                 <a th:if="${order.status == 'AWAITING_WEIGH_IN' and order.receiverAddress == null}"
                    th:href="@{/admin/scan-seller-barcode/{id}(id=${order.id})}"
-                   class="btn btn-red">Scan Seller Barcode (B2B)</a>
+                   class="btn btn-red btn-small">Scan B2B</a>
 
-                <!-- B2B FLOW 2: Scanned, waiting for Weight -->
                 <a th:if="${order.status == 'SCANNED'}"
                    th:href="@{/warehouse/scan}"
-                   class="btn btn-yellow">Weigh at Station (B2B)</a>
+                   class="btn btn-yellow btn-small">Weigh</a>
 
-                <!-- B2B FLOW 3: Sorted, waiting for Rider Assignment -->
                 <a th:if="${order.status == 'SORTED'}"
                    th:href="@{/admin/assign-rider/{id}(id=${order.id})}"
-                   class="btn btn-green">Assign Rider (B2B)</a>
+                   class="btn btn-green btn-small">Assign B2B</a>
 
-                <!-- If assigned, show rider name -->
-                <span th:if="${order.rider != null}" th:text="${order.rider.fullName}" style="font-weight: bold; color: blue;"></span>
+                <span th:if="${order.rider != null}" th:text="${order.rider.fullName}" style="font-weight: bold; color: blue; font-size: 12px;"></span>
             </td>
 
             <td th:text="${order.trackingId != null ? order.trackingId : 'Pending'}"></td>
             <td th:text="${order.id}"></td>
 
-            <!-- RECEIVER ADDRESS: Show customer name for B2C, or address for B2B -->
+            <!-- RECEIVER ADDRESS -->
             <td>
                 <span th:if="${order.receiverAddress != null}" th:text="${order.receiverAddress}"></span>
                 <span th:if="${order.receiverAddress == null and order.customer != null}" th:text="${order.customer.fullName} + ' (B2C)'"></span>
@@ -125,6 +123,12 @@
                 <span th:if="${order.status == 'ASSIGNED'}" class="status-assigned" th:text="${order.status}"></span>
                 <span th:if="${order.status == 'PICKED_UP'}" class="status-picked" th:text="${order.status}"></span>
                 <span th:if="${order.status == 'DELIVERED'}" class="status-delivered" th:text="${order.status}"></span>
+            </td>
+
+            <!-- MANAGE COLUMN (Edit & Cancel) -->
+            <td>
+                <a th:href="@{/admin/edit-order/{id}(id=${order.id})}" class="btn btn-small" style="background: #333; color: white;">✏️ Edit</a>
+                <a th:href="@{/admin/cancel-order/{id}(id=${order.id})}" onclick="return confirm('Cancel this order?')" class="btn btn-small btn-red">❌ Cancel</a>
             </td>
         </tr>
         </tbody>

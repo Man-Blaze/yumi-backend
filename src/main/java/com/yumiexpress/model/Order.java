@@ -56,4 +56,9 @@ public class Order {
     private String receiverAddress;
     private String specificAddressDetails;
     private String deliveryZone; // <--- ADDED THIS
+
+    private String deliveryType; // "B2C", "B2B", "B2G"
+    private String receiverEmail; // For future notifications
+    private String senderAddress; // Full sender address
+    private String receiverAddressFull; // Full receiver address
 }

@@ -29,6 +29,8 @@ public class SecurityConfig {
                         .requestMatchers("/admin/scan-seller-barcode/**").permitAll()
                         .requestMatchers("/admin/assign-rider/**").permitAll()
                         .requestMatchers("/admin-portal").permitAll()
+                                .requestMatchers("/admin/edit-order/**").permitAll()     // <--- ADD THIS
+                                .requestMatchers("/admin/cancel-order/**").permitAll()   // <--- ADD THIS
                         .requestMatchers("/warehouse/**").permitAll()
 
                                 .requestMatchers("/rider-portal/**", "/rider/**").permitAll()
@@ -51,12 +53,14 @@ public class SecurityConfig {
                         .requestMatchers("/api/orders/confirm-payment").permitAll()
                         .requestMatchers("/api/orders/*/qrcode").permitAll()
 
+                        .requestMatchers("/finance-dashboard").permitAll()
+
                         // 4. CATCH-ALL (Must be last)
-                        .anyRequest().authenticated()
-                         //.anyRequest().permitAll()
+                       // .anyRequest().authenticated()
+                        .anyRequest().permitAll()
                 )
-                .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
-               // .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
+                .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }

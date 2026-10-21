@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Order - YumiExpress Admin</title>
+    <style>
+        body { font-family: Arial; background-color: #f4f4f4; padding: 20px; margin: 0; }
+        .header { background: black; color: #FFD100; padding: 20px; text-align: center; border-radius: 10px 10px 0 0; max-width: 600px; margin: 0 auto; }
+        .container { background: white; padding: 30px; border-radius: 0 0 10px 10px; max-width: 600px; margin: 0 auto; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+        input, select { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; }
+        .btn { background: black; color: #FFD100; padding: 15px; width: 100%; border: none; font-weight: bold; font-size: 18px; border-radius: 5px; cursor: pointer; margin-top: 10px;}
+        .btn-green { background: #00A651; color: white; }
+        .btn-red { background: #E30613; color: white; }
+    </style>
+</head>
+<body>
+<div class="header">
+    <h1>Edit Order #<span th:text="${order.id}"></span></h1>
+    <a href="/admin-portal" style="color: #FFD100; font-size: 14px;">← Back to Dashboard</a>
+</div>
+
+<div class="container">
+    <form th:action="@{/admin/edit-order/{id}(id=${order.id})}" method="post">
+
+        <label><strong>Receiver Address:</strong></label>
+        <input type="text" name="receiverAddress" th:value="${order.receiverAddress}" required>
+
+        <label><strong>Specific Details (Landmark/Family):</strong></label>
+        <input type="text" name="specificAddressDetails" th:value="${order.specificAddressDetails}" required>
+
+        <label><strong>Recipient Phone:</strong></label>
+        <input type="text" name="recipientPhone" th:value="${order.recipientPhone}" required>
+
+        <label><strong>Assign Rider:</strong></label>
+        <select name="riderId">
+            <option value="">-- Unassigned --</option>
+            <option th:each="rider : ${riders}" th:value="${rider.id}" th:text="${rider.fullName}"
+                    th:selected="${order.rider != null && order.rider.id == rider.id}"></option>
+        </select>
+
+        <label><strong>Order Status:</strong></label>
+        <select name="status">
+            <option value="AWAITING_PICKUP" th:selected="${order.status == 'AWAITING_PICKUP'}">AWAITING PICKUP</option>
+            <option value="AWAITING_WEIGH_IN" th:selected="${order.status == 'AWAITING_WEIGH_IN'}">AWAITING SCAN</option>
+            <option value="SCANNED" th:selected="${order.status == 'SCANNED'}">SCANNED</option>
+            <option value="SORTED" th:selected="${order.status == 'SORTED'}">SORTED</option>
+            <option value="ASSIGNED" th:selected="${order.status == 'ASSIGNED'}">ASSIGNED</option>
+            <option value="PICKED_UP" th:selected="${order.status == 'PICKED_UP'}">PICKED UP</option>
+            <option value="DELIVERED" th:selected="${order.status == 'DELIVERED'}">DELIVERED</option>
+            <option value="CANCELLED" th:selected="${order.status == 'CANCELLED'}">CANCELLED</option>
+        </select>
+
+        <button type="submit" class="btn btn-green">Save Changes</button>
+    </form>
+
+    <form th:action="@{/admin/cancel-order/{id}(id=${order.id})}" method="get" style="margin-top: 10px;">
+        <button type="submit" class="btn btn-red" onclick="return confirm('Are you sure you want to CANCEL this order?');">CANCEL ORDER</button>
+    </form>
+</div>
+</body>
+</html>
