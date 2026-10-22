@@ -353,6 +353,15 @@ public class WebController {
                 .orElse(null);
 
         if (order != null && order.getRider() != null && order.getRider().getId().equals(riderId)) {
+
+            // --- NEW GUARD: Prevent scanning delivered or cancelled items ---
+            if ("DELIVERED".equals(order.getStatus()) || "CANCELLED".equals(order.getStatus())) {
+                model.addAttribute("message", "❌ Error: Parcel is already " + order.getStatus());
+                model.addAttribute("rider", rider);
+                return "rider-load"; // Stop here and show the error
+            }
+            // -----------------------------------------------------------------
+
             order.setStatus("PICKED_UP");
             orderRepository.save(order);
             model.addAttribute("message", "✅ Parcel " + trackingId + " loaded into bag!");

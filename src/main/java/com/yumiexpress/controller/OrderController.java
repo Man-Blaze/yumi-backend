@@ -202,10 +202,12 @@ public class OrderController {
         orderRepository.save(order);
 
         // 2. Process the payment (M-Vatu simulation)
-        paymentService.createPaymentRequest(order);
-        paymentService.confirmPayment(order.getM_vatu_reference());
-
-        System.out.println("⚖️ B2C Order #" + orderId + " weighed and paid: " + weight + "kg");
+        try {
+            paymentService.createPaymentRequest(order);
+            paymentService.confirmPayment(order.getM_vatu_reference());
+        } catch (Exception e) {
+            System.out.println("⚠️ Payment simulation failed, but order was updated: " + e.getMessage());
+        }
         return "Success";
     }
 }
