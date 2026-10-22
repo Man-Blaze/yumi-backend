@@ -39,7 +39,7 @@ public class OrderController {
     private PaymentService paymentService;
 
     @Autowired
-    private QrCodeGenerator qrCodeGenerator; // <--- ADDED THIS
+    private QrCodeGenerator qrCodeGenerator;
 
     @PostMapping("/book")
     public Order bookOrder(
@@ -133,7 +133,13 @@ public class OrderController {
                 .header("Content-Type", "image/png")
                 .body(image);
     }
-    // Endpoint to process multiple parcels at once for a B2C customer
+
+    // ==========================================
+    // BUG SOURCE: book-bulk was creating NEW orders every time.
+    // The Flutter app should now call /weigh-and-pay/{orderId} instead.
+    // Kept here (commented out) for reference only.
+    // ==========================================
+    /*
     @CrossOrigin(origins = "*")
     @PostMapping("/book-bulk")
     public String bookBulkParcels(@RequestBody List<Map<String, Object>> parcels) {
@@ -148,7 +154,6 @@ public class OrderController {
             order.setPickupAddress(parcelData.get("customerName").toString());
             order.setRecipientPhone(parcelData.get("phone").toString());
 
-            // NEW: Link the rider
             if (parcelData.containsKey("riderId")) {
                 Long riderId = Long.parseLong(parcelData.get("riderId").toString());
                 User rider = userRepository.findById(riderId).orElse(null);
@@ -160,6 +165,47 @@ public class OrderController {
         }
 
         System.out.println("📦 Bulk Booking: Processed " + parcels.size() + " parcels. Total: " + totalPrice + " VT");
+        return "Success";
+    }
+    */
+
+    // ==========================================
+    // FIXED ENDPOINT: Updates the EXISTING order (no duplicates)
+    // ==========================================
+    @CrossOrigin(origins = "*")
+    @PostMapping("/weigh-and-pay/{orderId}")
+    public String weighAndPay(@PathVariable Long orderId, @RequestBody List<Map<String, Object>> parcels) {
+        // For B2C, we only process the first parcel in the cart
+        if (parcels.isEmpty()) return "Error: No parcels in cart";
+
+        Map<String, Object> parcelData = parcels.get(0);
+        double weight = Double.parseDouble(parcelData.get("weight").toString());
+
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new RuntimeException("Order not found"));
+
+        // Guard: don't double-process
+        if ("PICKED_UP".equals(order.getStatus())
+                || "DELIVERED".equals(order.getStatus())
+                || "CANCELLED".equals(order.getStatus())) {
+            return "Error: Order already processed";
+        }
+
+        // 1. Update the existing order
+        order.setWeightInKg(weight);
+        order.setPrice(pricingService.calculatePrice(weight));
+        if (order.getTrackingId() == null) {
+            order.setTrackingId("YE-" + (10000 + new java.util.Random().nextInt(90000)));
+        }
+        order.setStatus("PICKED_UP");
+
+        orderRepository.save(order);
+
+        // 2. Process the payment (M-Vatu simulation)
+        paymentService.createPaymentRequest(order);
+        paymentService.confirmPayment(order.getM_vatu_reference());
+
+        System.out.println("⚖️ B2C Order #" + orderId + " weighed and paid: " + weight + "kg");
         return "Success";
     }
 }

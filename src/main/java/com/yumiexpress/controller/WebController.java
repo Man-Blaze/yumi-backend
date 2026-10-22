@@ -286,6 +286,12 @@ public class WebController {
         User rider = dispatchService.assignBestRider(order);
 
         if (rider != null) {
+            // NEW: Check if the rider is a scooter and the parcel is over 15kg
+            if ("OWN_SCOOTER".equals(rider.getVehicleType()) && order.getWeightInKg() > 15.0) {
+                System.out.println("❌ ERROR: Parcel is too heavy for a scooter! Assign to a Truck.");
+                return "redirect:/admin-portal?error=too_heavy";
+            }
+
             order.setRider(rider);
             order.setStatus("ASSIGNED");
             orderRepository.save(order);
