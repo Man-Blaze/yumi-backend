@@ -210,4 +210,12 @@ public class OrderController {
         }
         return "Success";
     }
+    // Add this inside OrderController.java
+    @GetMapping("/customer/{customerId}")
+    public List<Order> getCustomerOrders(@PathVariable Long customerId) {
+        User customer = userRepository.findById(customerId).orElseThrow();
+        return orderRepository.findAll().stream()
+                .filter(o -> o.getCustomer() != null && o.getCustomer().getId().equals(customer.getId()))
+                .toList();
+    }
 }

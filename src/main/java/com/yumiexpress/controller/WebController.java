@@ -444,10 +444,10 @@ public class WebController {
     public String showCustomerRegister() { return "customer-register"; }
 
     @PostMapping("/send-otp")
-    public String sendOtp(@RequestParam String phoneNumber, Model model) {
+    @ResponseBody // <--- ADD THIS
+    public String sendOtp(@RequestParam String phoneNumber) { // Removed Model
         System.out.println("📱 SIMULATED SMS SENT TO: " + phoneNumber + " | Code: 1234");
-        model.addAttribute("phoneNumber", phoneNumber);
-        return "verify-otp";
+        return "OTP_SENT"; // <--- Just tell the app it worked
     }
 
     @PostMapping("/verify-otp")
@@ -459,7 +459,8 @@ public class WebController {
             user.setPhoneNumber(phoneNumber);
             user.setFullName("Customer " + phoneNumber);
             user.setRole("CUSTOMER");
-            user.setPassword("default123");
+            user.setPassword("OTP_VERIFIED");
+            user.setArea("Port Vila");
             userRepository.save(user);
         }
         return "redirect:/customer-dashboard/" + user.getId();

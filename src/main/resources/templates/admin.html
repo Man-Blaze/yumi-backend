@@ -126,15 +126,17 @@
             </td>
 
             <!-- MANAGE COLUMN (Edit & Cancel) -->
-            <td>
+            <td style="white-space: nowrap;">
+                <!-- If the delivery failed, show a big Reschedule button -->
+                <a th:if="${order.status == 'FAILED_ATTEMPT'}" th:href="@{/admin/assign-rider/{id}(id=${order.id})}" class="btn btn-small" style="background: #28a745; color: white; font-weight: bold;">🔄 Reschedule</a>
                 <a th:href="@{/admin/edit-order/{id}(id=${order.id})}" class="btn btn-small" style="background: #333; color: white;">✏️ Edit</a>
                 <a th:href="@{/admin/cancel-order/{id}(id=${order.id})}" onclick="return confirm('Cancel this order?')" class="btn btn-small btn-red">❌ Cancel</a>
-            </td>
-        </tr>
-        </tbody>
-    </table>
+                </td>
+            </tr>
+            </tbody>
+        </table>
 
-    <!-- RIDER LOADING BAGS -->
+        <!-- RIDER LOADING BAGS -->
     <h3 style="margin-top: 40px;">Rider Loading Bags</h3>
     <table>
         <thead>
@@ -178,8 +180,20 @@
             <td th:text="${rider.vehicleType}"></td>
             <td th:text="${rider.payRate}"></td>
             <td>
-                <span th:if="${rider.available}" style="color: green; font-weight: bold;">AVAILABLE</span>
+                <!-- CHECK IF RIDER IS OFFLINE -->
                 <span th:if="${!rider.available}" style="color: red; font-weight: bold;">OFFLINE</span>
+
+                <!-- CHECK IF RIDER IS FULL (15KG OR MORE) -->
+                <span th:if="${rider.available && riderBagWeights.get(rider.id) >= 15.0}"
+                      style="color: red; font-weight: bold;">
+                  FULL (15kg)
+            </span>
+
+                <!-- CHECK IF RIDER IS AVAILABLE (UNDER 15KG) -->
+                <span th:if="${rider.available && riderBagWeights.get(rider.id) < 15.0}"
+                      style="color: green; font-weight: bold;">
+                  AVAILABLE
+            </span>
             </td>
         </tr>
         </tbody>

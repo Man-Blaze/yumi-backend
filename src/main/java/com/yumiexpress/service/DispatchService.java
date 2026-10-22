@@ -5,6 +5,7 @@ import com.yumiexpress.model.User;
 import com.yumiexpress.repository.UserRepository;
 import com.yumiexpress.repository.OrderRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -24,6 +25,9 @@ public class DispatchService {
     // Max scooter capacity
     private static final double MAX_CAPACITY_KG = 15.0;
 
+    // ==========================================
+    // 1. MANUAL ASSIGNMENT (Used by Admin Portal)
+    // ==========================================
     public User assignBestRider(Order newOrder) {
         // 1. Get all riders who are online and available
         List<User> availableRiders = userRepository.findAll().stream()
@@ -38,7 +42,6 @@ public class DispatchService {
         for (User rider : availableRiders) {
 
             // 2. KNAPSACK CHECK: How much weight is this rider already carrying?
-            // We must check both ASSIGNED (in their bag) and PICKED_UP (on the road)
             List<Order> activeOrders = orderRepository.findAll().stream()
                     .filter(o -> o.getRider() != null
                             && o.getRider().getId().equals(rider.getId())
@@ -66,5 +69,36 @@ public class DispatchService {
         }
 
         return bestRider;
+    }
+
+    // ==========================================
+    // 2. AUTO-DISPATCH ALGORITHM (Real-time Thread)
+    // Runs every 10 seconds in the background
+    // ==========================================
+    @Scheduled(fixedRate = 10000)
+    public void autoAssignRiders() {
+        // Find all orders that need a rider.
+        // We check that weight is greater than 0 so we don't assign unweighed B2B warehouse parcels.
+        List<Order> pendingOrders = orderRepository.findAll().stream()
+                .filter(o -> "AWAITING_PICKUP".equals(o.getStatus()) && o.getWeightInKg() > 0)
+                .toList();
+
+        for (Order order : pendingOrders) {
+            // Use the exact same algorithm we built above
+            User bestRider = assignBestRider(order);
+
+            if (bestRider != null) {
+                // 1. Assign the order
+                order.setRider(bestRider);
+                order.setStatus("ASSIGNED");
+                orderRepository.save(order);
+
+                // DO NOT SET TO BUSY.
+                // The Knapsack logic already ensures they don't exceed 15kg.
+                // We want them to keep getting orders until their bag is full.
+
+                System.out.println("🤖 AUTO-DISPATCH: Assigned Order #" + order.getId() + " to Rider " + bestRider.getFullName());
+            }
+        }
     }
 }
